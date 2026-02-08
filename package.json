@@ -1,0 +1,31 @@
+{
+  "name": "roblox-rank-sync-bot",
+  "version": "1.0.0",
+  "description": "Multi-server Roblox verification and rank sync Discord bot",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "discord",
+    "roblox",
+    "verification",
+    "rank-sync"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "sql.js": "^1.10.3",
+    "axios": "^1.6.7",
+    "bottleneck": "^2.19.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=16.9.0"
+  }
+}

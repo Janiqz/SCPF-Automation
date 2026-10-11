@@ -33,6 +33,6 @@ module.exports = {
         console.log('═══════════════════════════════════════════════\n');
 
         // Set bot status
-        client.user.setActivity('SCP Foundation', { type: 3 }); // 3 = WATCHING
+        client.user.setActivity("Janiqz's SCPF", { type: 3 });
     }
 };

@@ -2,37 +2,102 @@ const { Events } = require('discord.js');
 
 module.exports = {
     name: Events.GuildMemberAdd,
-    async execute(member, { database, rankSyncService, configManager }) {
+
+    async execute(
+        member,
+        { database, rankSyncService, configManager }
+    ) {
         try {
-            const serverConfig = configManager.getServerConfig(member.guild.id);
-            
-            // Check if server is configured and sync on join is enabled
-            if (!serverConfig || !serverConfig.syncSettings.syncOnJoin) {
+            if (member.user.bot) {
                 return;
             }
 
-            // Check if user is verified
-            const verification = database.getVerification(member.user.id);
-            if (!verification) {
-                return; // User not verified, nothing to sync
+            const serverConfig =
+                configManager.getServerConfig(
+                    member.guild.id
+                );
+
+            // Server isn't configured.
+            if (!serverConfig) {
+                return;
             }
 
-            console.log(`[GuildMemberAdd] Syncing verified user ${member.user.tag} in ${member.guild.name}`);
+            // ========================================================
+            // UNVERIFIED / GUEST
+            // ========================================================
+            //
+            // This MUST happen even when there is no verification
+            // record.
+            //
+            // syncGuestInGuild() handles the Server Member role and
+            // [SM] nickname specifically for the main Foundation server.
+            //
 
-            // Sync the user
-            const result = await rankSyncService.syncUserInGuild(
-                member.client,
-                member.guild.id,
-                member.user.id
+            const verification =
+                database.getVerification(
+                    member.user.id
+                );
+
+            if (!verification) {
+                console.log(
+                    `[GuildMemberAdd] ${member.user.tag} is unverified in ${member.guild.name} - assigning Server Member`
+                );
+
+                const result =
+                    await rankSyncService.syncGuestInGuild(
+                        member
+                    );
+
+                if (result.success) {
+                    console.log(
+                        `[GuildMemberAdd] Assigned Server Member status to ${member.user.tag}`
+                    );
+                } else {
+                    console.error(
+                        `[GuildMemberAdd] Failed to assign Server Member status to ${member.user.tag}: ${result.error}`
+                    );
+                }
+
+                return;
+            }
+
+            // ========================================================
+            // VERIFIED USER
+            // ========================================================
+
+            if (
+                !serverConfig.syncSettings
+                    .syncOnJoin
+            ) {
+                return;
+            }
+
+            console.log(
+                `[GuildMemberAdd] Syncing verified user ${member.user.tag} in ${member.guild.name}`
             );
 
+            const result =
+                await rankSyncService.syncUserInGuild(
+                    member.client,
+                    member.guild.id,
+                    member.user.id
+                );
+
             if (result.success) {
-                console.log(`[GuildMemberAdd] Successfully synced ${member.user.tag} - Rank: ${result.rank}`);
+                console.log(
+                    `[GuildMemberAdd] Successfully synced ${member.user.tag} - Rank: ${result.rank}`
+                );
             } else {
-                console.error(`[GuildMemberAdd] Failed to sync ${member.user.tag}: ${result.error}`);
+                console.error(
+                    `[GuildMemberAdd] Failed to sync ${member.user.tag}: ${result.error}`
+                );
             }
+
         } catch (error) {
-            console.error('[GuildMemberAdd] Error:', error);
+            console.error(
+                '[GuildMemberAdd] Error:',
+                error
+            );
         }
     }
 };

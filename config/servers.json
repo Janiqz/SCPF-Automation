@@ -1,0 +1,609 @@
+{
+  "servers": [
+    {
+      "guildId": "1145951510807720006",
+      "guildName": "Main Foundation Server",
+      "serverMemberDefaults": true,
+      "robloxGroupId": 5458485,
+      "nicknameFormat": "rank",
+      "staffRoles": [
+        "1146471318846455878",
+        "1265901042554638386"
+      ],
+      "rankMappings": {
+        "1": {
+          "roleName": "D Class Personnel",
+          "nicknamePrefix": "[CD] "
+        },
+        "2": {
+          "roleName": "E Class Personnel",
+          "nicknamePrefix": "[CE] "
+        },
+        "3": {
+          "roleName": "Foundation Personnel",
+          "nicknamePrefix": "[L-0] "
+        },
+        "4": {
+          "roleName": "Foundation Personnel",
+          "nicknamePrefix": "[L-1] "
+        },
+        "5": {
+          "roleName": "Foundation Personnel",
+          "nicknamePrefix": "[L-2] "
+        },
+        "6": {
+          "roleName": "Foundation Personnel",
+          "nicknamePrefix": "[L-3] "
+        },
+        "7": {
+          "roleName": "Executive Personnel",
+          "nicknamePrefix": "[L-4] "
+        },
+        "8": {
+          "roleName": "Executive Personnel",
+          "nicknamePrefix": "[L-5] "
+        },
+        "9": {
+          "roleName": "Site Director",
+          "nicknamePrefix": "[SiD] "
+        },
+        "10": {
+          "roleName": "O5 Council",
+          "nicknamePrefix": "[O5-#] "
+        },
+        "11": {
+          "roleName": "O5 Head",
+          "nicknamePrefix": "[O5-X] "
+        },
+         "12": {
+          "roleName": "Developer",
+          "nicknamePrefix": "[DEV] "
+        },
+         "13": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TA] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 30,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": "1470105704403566745"
+    },
+    {
+      "guildId": "1482931140603023510",
+      "guildName": "Mobile Task Force",
+      "robloxGroupId": 5459069,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "2": {
+          "roleName": "Awaiting Assignment",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "Recruit",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Junior Operative",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "Operative",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "6": {
+          "roleName": "Operative",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "7": {
+          "roleName": "Head Operative",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "8": {
+          "roleName": "Task Force Leader",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "9": {
+          "roleName": "Operations Coordinator",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "10": {
+          "roleName": "Commanding Officer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "11": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    },
+    {
+      "guildId": "1482930888080756899",
+      "guildName": "Security Department",
+      "robloxGroupId": 5459441,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "1": {
+          "roleName": "Suspended",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "2": {
+          "roleName": "Security Cadet",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "Security Officer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Senior Security Officer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "Security Sergeant",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "6": {
+          "roleName": "Senior Security Sergeant",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "7": {
+          "roleName": "Security Lieutenant",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "8": {
+          "roleName": "Security Captain",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "9": {
+          "roleName": "Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "10": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    },
+    {
+      "guildId": "1482923600590803187",
+      "guildName": "Ethics Committee",
+      "robloxGroupId": 5460476,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "1": {
+          "roleName": "Student",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "2": {
+          "roleName": "Intern",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "Constituent",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Senior Constituent",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "Investigator",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "6": {
+          "roleName": "Inspector",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "7": {
+          "roleName": "Supervisor",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "8": {
+          "roleName": "Deputy Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "9": {
+          "roleName": "Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "10": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    },
+    {
+      "guildId": "1470868007352795292",
+      "guildName": "Internal Investigation Agency",
+      "robloxGroupId": 6459529,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "1": {
+          "roleName": "Probationary Agent",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "2": {
+          "roleName": "Agent",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "Supervisory Agent",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    },
+    {
+      "guildId": "1482213676625690724",
+      "guildName": "Clinical Science Department",
+      "robloxGroupId": 5464330,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "1": {
+          "roleName": "Suspended",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "2": {
+          "roleName": "Intern",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "Junior Researcher",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Associate Researcher",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "Researcher",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "6": {
+          "roleName": "Senior Researcher",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "7": {
+          "roleName": "Research Supervisor",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "8": {
+          "roleName": "Head Researcher",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "9": {
+          "roleName": "Assistant Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "10": {
+          "roleName": "Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "11": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    },
+    {
+      "guildId": "1491946979683598487",
+      "guildName": "Medical Department",
+      "robloxGroupId": 6648925,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "1": {
+          "roleName": "Trainee",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "2": {
+          "roleName": "Nurse",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "CM Nurse",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Doctor",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "CM Doctor",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "6": {
+          "roleName": "Physician",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "7": {
+          "roleName": "CM Physician",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "8": {
+          "roleName": "CM Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "9": {
+          "roleName": "Medical Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "10": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    },
+    {
+      "guildId": "1491946727106805810",
+      "guildName": "Department of External Affairs",
+      "robloxGroupId": 5465286,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "1": {
+          "roleName": "Attaché in Training",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "2": {
+          "roleName": "Diplomatic Attaché",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "Public Information Attaché",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Foreign Emissary",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "Ambassador",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "6": {
+          "roleName": "Chief Ambassador",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "7": {
+          "roleName": "Magistrate of Accords",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "8": {
+          "roleName": "Under-Secretary of External Affairs",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "9": {
+          "roleName": "Secretary of External Affairs",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "10": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    },
+    {
+      "guildId": "1491947315756273835",
+      "guildName": "Engineering & Technical Department",
+      "robloxGroupId": 6448879,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "1": {
+          "roleName": "Suspended",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "2": {
+          "roleName": "Intern",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "Service Technician",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Engineering Specialist",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "Supervisor",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "6": {
+          "roleName": "Operations Manager",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "7": {
+          "roleName": "Directorate",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "8": {
+          "roleName": "Assistant Director of Engineering",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "9": {
+          "roleName": "Director of Engineering",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "10": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    },
+    {
+      "guildId": "1491947597043204156",
+      "guildName": "Logistics Department",
+      "robloxGroupId": 8441931,
+      "nicknameFormat": "custom",
+      "customNicknamePrefix": "[TIMEZONE] ",
+      "staffRoles": [],
+      "rankMappings": {
+        "1": {
+          "roleName": "Suspended",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "2": {
+          "roleName": "Intern",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "3": {
+          "roleName": "Junior Logistician",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "4": {
+          "roleName": "Logistician",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "5": {
+          "roleName": "Senior Logistician",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "6": {
+          "roleName": "Manager",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "7": {
+          "roleName": "Supervisor",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "8": {
+          "roleName": "Assistant Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "9": {
+          "roleName": "Director",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "10": {
+          "roleName": "Overseer",
+          "nicknamePrefix": "[TIMEZONE] "
+        },
+        "255": {
+          "roleName": "The Administrator",
+          "nicknamePrefix": "[TIMEZONE] "
+        }
+      },
+      "syncSettings": {
+        "backgroundSyncEnabled": true,
+        "syncIntervalMinutes": 60,
+        "syncOnJoin": true,
+        "syncOnVerify": true
+      },
+      "loggingChannelId": null
+    }
+  ]
+}

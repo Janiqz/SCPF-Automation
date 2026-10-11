@@ -1,7 +1,7 @@
 node_modules/ 
+.npm/
 .env 
 data/ 
 *.db 
 *.sqlite 
 .DS_Store 
-config/servers.json 

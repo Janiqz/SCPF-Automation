@@ -1,0 +1,192 @@
+{
+  "servers": [
+    {
+      "guildId": "1145951510807720006",
+      "guildName": "Main Foundation Server",
+      "applicationChannelId": "1470866116279795954",
+      "notificationChannelId": "1470925301159825478",
+      "applications": [
+        {
+          "id": "level_0",
+          "name": "Level 0",
+          "description": "Apply to become Level 0 Foundation Personnel",
+          "emoji": "<:Clearance_0:1470918253600837834>",
+          "requiredRank": 1,
+          "requiredRankDisplay": "D-Class Personnel",
+          "targetRank": 3,
+          "targetRankDisplay": "Level 0 Personnel",
+          "cooldownDays": 0,
+          "questions": [
+            {
+              "label": "Why do you want to join?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 600
+            },
+            {
+              "label": "What makes a good member?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 600
+            },
+            {
+              "label": "How would you contribute?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 600
+            },
+            {
+              "label": "What if you're unsure of an order?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 600
+            }
+          ],
+          "reviewChannelId": "1470867779996352693",
+          "reviewerRoleIds": [
+            "1146471318846455878",
+            "1265901042554638386"
+          ],
+          "autoRank": false
+        },
+        {
+          "id": "level_1",
+          "name": "Level 1",
+          "description": "Apply to become Level 1 Foundation Personnel",
+          "emoji": "<:Clearance_1:1470918269941583882>",
+          "requiredRank": 3,
+          "requiredRankDisplay": "Level 0 Personnel",
+          "targetRank": 4,
+          "targetRankDisplay": "Level 1 Personnel",
+          "cooldownDays": 7,
+          "questions": [
+            {
+              "label": "What earned you a promotion?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "What duties should Level 1 take seriously?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "How would you handle ignored orders?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "What if you make an operational mistake?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 600
+            }
+          ],
+          "reviewChannelId": "1470867779996352693",
+          "reviewerRoleIds": [
+            "1146471318846455878",
+            "1265901042554638386"
+          ],
+          "autoRank": false
+        },
+        {
+          "id": "level_2",
+          "name": "Level 2",
+          "description": "Apply to become Level 2 Foundation Personnel",
+          "emoji": "<:Clearance_2:1470918286974914663>",
+          "requiredRank": 4,
+          "requiredRankDisplay": "Level 1 Personnel",
+          "targetRank": 5,
+          "targetRankDisplay": "Level 2 Personnel",
+          "cooldownDays": 7,
+          "questions": [
+            {
+              "label": "Why are you ready for more responsibility?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "What qualities should trusted members have?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "How do you handle lower-ranked challenges?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "What do you do if protocol is broken?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            }
+          ],
+          "reviewChannelId": "1470918253600837834",
+          "reviewerRoleIds": [
+            "1146471510807720006",
+            "1265901042554638386"
+          ],
+          "autoRank": false
+        }
+      ]
+    },
+    {
+      "guildId": "1470868007352795292",
+      "guildName": "Department Server - Engineering",
+      "applicationChannelId": "1470868008665874621",
+      "notificationChannelId": "1470868061816094864",
+      "applications": [
+        {
+          "id": "engineer",
+          "name": "Engineer Application",
+          "description": "Apply to join the Engineering Department",
+          "emoji": "🔧",
+          "requiredRank": 3,
+          "requiredRankDisplay": "Level 0 Personnel",
+          "targetRank": 1,
+          "targetRankDisplay": "Trainee Engineer",
+          "requiredRoleId": null,
+          "cooldownDays": 0,
+          "questions": [
+            {
+              "label": "Why do you want to join Engineering?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "What makes a good engineer?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "What do you do when a system fails?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            },
+            {
+              "label": "What if you can't complete a task?",
+              "style": "paragraph",
+              "required": true,
+              "maxLength": 700
+            }
+          ],
+          "reviewChannelId": "1470868061816094864",
+          "reviewerRoleIds": [
+            "1470868154778390629"
+          ],
+          "autoRank": false
+        }
+      ]
+    }
+  ]
+}

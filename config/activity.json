@@ -15,7 +15,7 @@
       "startDescription": "{reason}\n\nUse the live facility status to join the active site.",
       "endTitle": "Area 37 Session Ended",
       "endDescription": "The active Area 37 session has concluded.",
-      "notifyEveryone": false,
+      "notifyMode": "none",
       "notifyRoleId": ""
     },
     "paid-riot": {
@@ -27,7 +27,7 @@
       "startDescription": "{reason}\n\nRespond through the live facility status below.",
       "endTitle": "Paid Riot Ended",
       "endDescription": "The paid riot event has concluded.",
-      "notifyEveryone": true,
+      "notifyMode": "everyone",
       "notifyRoleId": ""
     }
   }

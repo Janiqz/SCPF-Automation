@@ -72,6 +72,10 @@ function snapshot(overrides = {}) {
     const paidRiotMention = sessionService.buildMention(sessionService.loadConfig().types['paid-riot']);
     assert.strictEqual(paidRiotMention.content, '@everyone');
     assert(paidRiotMention.allowedMentions.parse.includes('everyone'));
+    const roleMention = sessionService.buildMention({ notifyMode: 'role', notifyRoleId: '123456789012345678' });
+    assert.strictEqual(roleMention.content, '<@&123456789012345678>');
+    assert.deepStrictEqual(roleMention.allowedMentions.roles, ['123456789012345678']);
+    assert.strictEqual(sessionService.buildMention({ notifyMode: 'none' }).content, '');
 
     let request;
     const service = new FacilityStateService({

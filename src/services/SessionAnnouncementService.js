@@ -37,11 +37,13 @@ class SessionAnnouncementService {
     buildMention(template) {
         const content = [];
         const allowedMentions = { parse: [], roles: [] };
-        if (template.notifyEveryone === true) {
+        const mode = String(template.notifyMode || 'none').toLowerCase();
+        if (mode === 'everyone') {
             content.push('@everyone');
             allowedMentions.parse.push('everyone');
         }
-        if (typeof template.notifyRoleId === 'string' && /^\d{16,20}$/.test(template.notifyRoleId)) {
+        if (mode === 'role' && typeof template.notifyRoleId === 'string'
+            && /^\d{16,20}$/.test(template.notifyRoleId)) {
             content.push(`<@&${template.notifyRoleId}>`);
             allowedMentions.roles.push(template.notifyRoleId);
         }

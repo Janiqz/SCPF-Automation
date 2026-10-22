@@ -72,7 +72,7 @@
       },
       "loggingChannelId": "1470105704403566745",
       "facilityStatus": {
-        "enabled": true,
+        "enabled": false,
         "channelId": "1146473651949031534",
         "messageId": null,
         "alertEveryone": false,

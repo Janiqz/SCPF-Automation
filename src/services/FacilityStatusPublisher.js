@@ -202,28 +202,29 @@ class FacilityStatusPublisher {
         return this.publish(config, snapshot);
     }
 
+    async findStatusMessage(channel, messageId) {
+        if (messageId) {
+            try { return await channel.messages.fetch(messageId); } catch (_) { /* discover below */ }
+        }
+        try {
+            const recentMessages = await channel.messages.fetch({ limit: 50 });
+            return recentMessages.find(candidate =>
+                candidate.author.id === this.client.user.id
+                && candidate.embeds.some(embed =>
+                    embed.footer && embed.footer.text === 'Area 37 Facility Status • updates automatically'
+                )
+            ) || null;
+        } catch (_) {
+            return null;
+        }
+    }
+
     async publish(config, snapshot) {
         const settings = config.facilityStatus;
         const channel = await this.client.channels.fetch(settings.channelId);
         if (!channel || !channel.isTextBased()) throw new Error('Configured facility channel is unavailable.');
         const payload = buildMessage(snapshot, undefined, settings.activity);
-        let message = null;
-        if (settings.messageId) {
-            try { message = await channel.messages.fetch(settings.messageId); } catch (_) { message = null; }
-        }
-        if (!message) {
-            try {
-                const recentMessages = await channel.messages.fetch({ limit: 50 });
-                message = recentMessages.find(candidate =>
-                    candidate.author.id === this.client.user.id
-                    && candidate.embeds.some(embed =>
-                        embed.footer && embed.footer.text === 'Area 37 Facility Status • updates automatically'
-                    )
-                ) || null;
-            } catch (_) {
-                message = null;
-            }
-        }
+        let message = await this.findStatusMessage(channel, settings.messageId);
         if (message) await message.edit({ embeds: payload.embeds, components: payload.components });
         else {
             message = await channel.send({ embeds: payload.embeds, components: payload.components });
@@ -252,9 +253,15 @@ class FacilityStatusPublisher {
     async setup(interaction, channel, alertEveryone) {
         const config = this.configManager.getServerConfig(interaction.guildId);
         if (!config) throw new Error('This Discord server has no bot configuration yet.');
+        const previousSettings = config.facilityStatus ? { ...config.facilityStatus } : null;
         const snapshot = await this.stateService.fetchSnapshot();
         const payload = buildMessage(snapshot, undefined, config.facilityStatus && config.facilityStatus.activity);
-        const sent = await channel.send({ embeds: payload.embeds, components: payload.components });
+        let sent = null;
+        if (previousSettings && previousSettings.channelId === channel.id) {
+            sent = await this.findStatusMessage(channel, previousSettings.messageId);
+        }
+        if (sent) await sent.edit({ embeds: payload.embeds, components: payload.components });
+        else sent = await channel.send({ embeds: payload.embeds, components: payload.components });
         config.facilityStatus = {
             enabled: true,
             channelId: channel.id,
@@ -266,6 +273,18 @@ class FacilityStatusPublisher {
         if (!result.success) {
             await sent.delete().catch(() => {});
             throw new Error(`Could not save facility configuration: ${result.error}`);
+        }
+        if (previousSettings && previousSettings.channelId
+            && previousSettings.channelId !== channel.id) {
+            try {
+                const oldChannel = await this.client.channels.fetch(previousSettings.channelId);
+                if (oldChannel && oldChannel.isTextBased()) {
+                    const oldMessage = await this.findStatusMessage(oldChannel, previousSettings.messageId);
+                    if (oldMessage) await oldMessage.delete();
+                }
+            } catch (error) {
+                console.warn('[FacilityStatus] Could not remove the old channel embed:', error.message);
+            }
         }
         this.observedLevels.set(interaction.guildId, summarizeSnapshot(snapshot).level);
         this.lastSnapshot = snapshot;

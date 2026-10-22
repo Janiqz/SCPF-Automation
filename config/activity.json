@@ -1,0 +1,34 @@
+{
+  "authorizedRoleNames": [
+    "O5 Council",
+    "Developer",
+    "O5 Head",
+    "The Administrator"
+  ],
+  "types": {
+    "standard": {
+      "displayName": "Facility Session",
+      "statusLabel": "Session Active",
+      "colour": 3447003,
+      "defaultReason": "Foundation personnel are requested on-site.",
+      "startTitle": "Area 37 Session Started",
+      "startDescription": "{reason}\n\nUse the live facility status to join the active site.",
+      "endTitle": "Area 37 Session Ended",
+      "endDescription": "The active Area 37 session has concluded.",
+      "notifyEveryone": false,
+      "notifyRoleId": ""
+    },
+    "paid-riot": {
+      "displayName": "Paid Riot",
+      "statusLabel": "Paid Riot Active",
+      "colour": 14431557,
+      "defaultReason": "A paid riot is now active at Area 37.",
+      "startTitle": "Paid Riot Initiated",
+      "startDescription": "{reason}\n\nRespond through the live facility status below.",
+      "endTitle": "Paid Riot Ended",
+      "endDescription": "The paid riot event has concluded.",
+      "notifyEveryone": true,
+      "notifyRoleId": ""
+    }
+  }
+}

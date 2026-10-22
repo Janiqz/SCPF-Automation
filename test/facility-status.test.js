@@ -1,7 +1,8 @@
 const assert = require('assert');
 const FacilityStateService = require('../src/services/FacilityStateService');
-const { summarizeSnapshot, buildMessage } = require('../src/services/FacilityStatusPublisher');
+const { summarizeSnapshot, buildMessage, formatAlarmName } = require('../src/services/FacilityStatusPublisher');
 const facilityCommand = require('../src/commands/facility');
+const SessionAnnouncementService = require('../src/services/SessionAnnouncementService');
 
 function snapshot(overrides = {}) {
     return {
@@ -26,6 +27,8 @@ function snapshot(overrides = {}) {
     const degraded = summarizeSnapshot(snapshot(), 1_030);
     assert.strictEqual(degraded.level, 'degraded');
     assert.strictEqual(degraded.scps.tracked.length, 1);
+    assert.strictEqual(formatAlarmName('BreachAlarmPanel'), 'Breach Alarm');
+    assert.strictEqual(formatAlarmName('CodeYellowAlarmPanel'), 'Code Yellow Alarm');
 
     const emergencyData = snapshot();
     emergencyData.Components = { ...emergencyData.Components, Alarms: { ActivePanelId: 'BreachAlarm' } };
@@ -35,10 +38,40 @@ function snapshot(overrides = {}) {
     displacedData.Components = { ...displacedData.Components, 'SCP:SCP-173': { Status: 'displaced' } };
     assert.strictEqual(summarizeSnapshot(displacedData, 1_030).level, 'critical');
 
-    assert.strictEqual(summarizeSnapshot(snapshot(), 1_500).level, 'offline');
+    assert.strictEqual(summarizeSnapshot(snapshot(), 1_500).level, 'degraded');
     const payload = buildMessage(snapshot(), 1_030);
     assert.strictEqual(payload.components.length, 1);
     assert(payload.components[0].toJSON().components[0].url.includes('gameInstanceId=job-id'));
+    const lastKnownPayload = buildMessage(snapshot(), 1_500);
+    assert.strictEqual(lastKnownPayload.summary.stale, true);
+    assert.strictEqual(lastKnownPayload.summary.level, 'degraded');
+    assert(!lastKnownPayload.embeds[0].toJSON().title.includes('Offline'));
+    assert(!lastKnownPayload.components[0].toJSON().components[0].url.includes('gameInstanceId'));
+    const activityPayload = buildMessage(snapshot(), 1_030, {
+        active: true,
+        statusLabel: 'Paid Riot Active',
+        reason: 'Commissioned event',
+        startedAt: 1_020
+    });
+    const activityField = activityPayload.embeds[0].toJSON().fields.find(field => field.name === 'Active Activity');
+    assert(activityField.value.includes('Paid Riot Active'));
+
+    const sessionService = new SessionAnnouncementService({}, {}, {}, {
+        configPath: require('path').join(__dirname, '../config/activity.json')
+    });
+    assert.strictEqual(sessionService.isAuthorized({
+        guild: { ownerId: 'owner' },
+        user: { id: 'member' },
+        member: { roles: { cache: [{ name: 'O5 Council' }] } }
+    }), true);
+    assert.strictEqual(sessionService.isAuthorized({
+        guild: { ownerId: 'owner' },
+        user: { id: 'member' },
+        member: { roles: { cache: [{ name: 'Foundation Personnel' }] } }
+    }), false);
+    const paidRiotMention = sessionService.buildMention(sessionService.loadConfig().types['paid-riot']);
+    assert.strictEqual(paidRiotMention.content, '@everyone');
+    assert(paidRiotMention.allowedMentions.parse.includes('everyone'));
 
     let request;
     const service = new FacilityStateService({

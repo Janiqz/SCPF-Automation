@@ -23,6 +23,7 @@ const ApplicationManager = require('./services/ApplicationManager');
 const AgeVerificationServer = require('./services/AgeVerificationServer');
 const FacilityStateService = require('./services/FacilityStateService');
 const FacilityStatusPublisher = require('./services/FacilityStatusPublisher');
+const SessionAnnouncementService = require('./services/SessionAnnouncementService');
 
 // ============================================================
 // AGE ROLE CONFIGURATION
@@ -506,6 +507,13 @@ const database =
             configManager
         );
 
+    const sessionAnnouncements =
+        new SessionAnnouncementService(
+            client,
+            configManager,
+            facilityStatus
+        );
+
     // ========================================================
     // STORE SERVICES
     // ========================================================
@@ -519,7 +527,8 @@ const database =
         backgroundSync,
         ageVerificationServer,
         facilityState,
-        facilityStatus
+        facilityStatus,
+        sessionAnnouncements
     };
 
     // ========================================================

@@ -8,7 +8,6 @@ const {
 const CRITICAL_COLOUR = 0xd9363e;
 const DEGRADED_COLOUR = 0xe6a817;
 const STABLE_COLOUR = 0x2fa866;
-const OFFLINE_COLOUR = 0x69707d;
 const DEFAULT_REFRESH_MS = 30 * 1000;
 const DEFAULT_STALE_SECONDS = 120;
 const ALERT_COOLDOWN_SECONDS = 30 * 60;
@@ -20,14 +19,16 @@ function numeric(value, fallback = 0) {
 
 function getScpSummary(components) {
     const tracked = [];
-    const displaced = [];
+    const breached = [];
+    const incidents = [];
     for (const [key, state] of Object.entries(components)) {
         if (!key.startsWith('SCP:') || !state || typeof state !== 'object') continue;
         const name = key.slice(4);
         tracked.push(name);
-        if (state.Status !== 'contained') displaced.push(name);
+        if (state.Status === 'breached' || state.Status === 'displaced') breached.push(name);
+        if (state.Status === 'outbreak') incidents.push(`${name} outbreak`);
     }
-    return { tracked, displaced };
+    return { tracked, breached, incidents };
 }
 
 function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000), staleSeconds = DEFAULT_STALE_SECONDS) {
@@ -51,8 +52,7 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
     const lowStock = capacity > 0 && stock / capacity < 0.3;
 
     let level = 'stable';
-    if (stale) level = 'offline';
-    else if (activeAlarm || scps.displaced.length > 0) level = 'critical';
+    if (activeAlarm || scps.breached.length > 0 || scps.incidents.length > 0) level = 'critical';
     else if (brokenLights > 0 || brokenElevators > 0 || disabledElevators > 0 || lowStock) level = 'degraded';
 
     return {
@@ -76,19 +76,30 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
     };
 }
 
-function buildMessage(snapshot, nowSeconds) {
+function formatAlarmName(panelId) {
+    if (!panelId) return 'No active alarm';
+    return panelId
+        .replace(/Panel$/, '')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .trim();
+}
+
+function buildMessage(snapshot, nowSeconds, activity) {
     const summary = summarizeSnapshot(snapshot, nowSeconds);
     const styles = {
         stable: { colour: STABLE_COLOUR, title: 'Facility Stable', icon: '🟢' },
         degraded: { colour: DEGRADED_COLOUR, title: 'Facility Degraded', icon: '🟡' },
-        critical: { colour: CRITICAL_COLOUR, title: 'Facility Emergency', icon: '🔴' },
-        offline: { colour: OFFLINE_COLOUR, title: 'Facility Feed Offline', icon: '⚫' }
+        critical: { colour: CRITICAL_COLOUR, title: 'Facility Emergency', icon: '🔴' }
     };
     const style = styles[summary.level];
-    const scpValue = summary.scps.displaced.length
-        ? `⚠️ Displaced: ${summary.scps.displaced.join(', ')}`
+    const activeIncidents = [
+        ...summary.scps.breached.map(name => `${name} breached`),
+        ...summary.scps.incidents
+    ];
+    const scpValue = activeIncidents.length
+        ? `⚠️ ${activeIncidents.join(', ')}`
         : `${summary.scps.tracked.length} tracked • all contained`;
-    const alarmValue = summary.activeAlarm ? `🚨 ${summary.activeAlarm}` : 'No active alarm';
+    const alarmValue = summary.activeAlarm ? `🚨 ${formatAlarmName(summary.activeAlarm)}` : 'No active alarm';
     const updatedText = Number.isFinite(summary.age)
         ? `<t:${summary.updatedAt}:R>`
         : 'Waiting for first live save';
@@ -96,9 +107,7 @@ function buildMessage(snapshot, nowSeconds) {
     const embed = new EmbedBuilder()
         .setColor(style.colour)
         .setTitle(`${style.icon} Area 37 • ${style.title}`)
-        .setDescription(summary.stale
-            ? 'The canonical game server has stopped reporting. This is not treated as a facility emergency.'
-            : 'Live operational state from the canonical Area 37 server.')
+        .setDescription('Latest canonical Area 37 state. This remains in effect until a live server reports a change.')
         .addFields(
             { name: 'Personnel', value: `${summary.playerCount} online`, inline: true },
             { name: 'SCP Containment', value: scpValue, inline: true },
@@ -111,9 +120,19 @@ function buildMessage(snapshot, nowSeconds) {
         .setFooter({ text: 'Area 37 Facility Status • updates automatically' })
         .setTimestamp(new Date(summary.updatedAt > 0 ? summary.updatedAt * 1000 : Date.now()));
 
+    if (activity && activity.active === true) {
+        embed.addFields({
+            name: 'Active Activity',
+            value: `**${activity.statusLabel || activity.displayName || activity.type}**\n${activity.reason || 'No reason provided.'}\nStarted <t:${numeric(activity.startedAt)}:R>`,
+            inline: false
+        });
+    }
+
     const components = [];
-    if (!summary.stale && summary.placeId && summary.jobId) {
-        const joinUrl = `https://www.roblox.com/games/start?placeId=${encodeURIComponent(summary.placeId)}&gameInstanceId=${encodeURIComponent(summary.jobId)}`;
+    if (summary.placeId) {
+        const joinUrl = summary.stale || !summary.jobId
+            ? `https://www.roblox.com/games/start?placeId=${encodeURIComponent(summary.placeId)}`
+            : `https://www.roblox.com/games/start?placeId=${encodeURIComponent(summary.placeId)}&gameInstanceId=${encodeURIComponent(summary.jobId)}`;
         components.push(new ActionRowBuilder().addComponents(
             new ButtonBuilder().setLabel('Join Facility').setStyle(ButtonStyle.Link).setURL(joinUrl)
         ));
@@ -187,7 +206,7 @@ class FacilityStatusPublisher {
         const settings = config.facilityStatus;
         const channel = await this.client.channels.fetch(settings.channelId);
         if (!channel || !channel.isTextBased()) throw new Error('Configured facility channel is unavailable.');
-        const payload = buildMessage(snapshot);
+        const payload = buildMessage(snapshot, undefined, settings.activity);
         let message = null;
         if (settings.messageId) {
             try { message = await channel.messages.fetch(settings.messageId); } catch (_) { message = null; }
@@ -234,7 +253,7 @@ class FacilityStatusPublisher {
         const config = this.configManager.getServerConfig(interaction.guildId);
         if (!config) throw new Error('This Discord server has no bot configuration yet.');
         const snapshot = await this.stateService.fetchSnapshot();
-        const payload = buildMessage(snapshot);
+        const payload = buildMessage(snapshot, undefined, config.facilityStatus && config.facilityStatus.activity);
         const sent = await channel.send({ embeds: payload.embeds, components: payload.components });
         config.facilityStatus = {
             enabled: true,
@@ -274,7 +293,7 @@ class FacilityStatusPublisher {
             if (channel && channel.isTextBased() && settings.messageId) {
                 const message = await channel.messages.fetch(settings.messageId);
                 const embed = new EmbedBuilder()
-                    .setColor(OFFLINE_COLOUR)
+                    .setColor(0x69707d)
                     .setTitle('⚫ Area 37 • Facility Feed Disabled')
                     .setDescription('Live facility reporting was disabled by the Discord server owner.')
                     .setTimestamp();
@@ -293,3 +312,4 @@ class FacilityStatusPublisher {
 module.exports = FacilityStatusPublisher;
 module.exports.buildMessage = buildMessage;
 module.exports.summarizeSnapshot = summarizeSnapshot;
+module.exports.formatAlarmName = formatAlarmName;

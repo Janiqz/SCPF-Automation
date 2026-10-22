@@ -1,12 +1,12 @@
 const http = require('http');
 const { EmbedBuilder } = require('discord.js');
 
-const WEBHOOK_SECRET = process.env.AGE_WEBHOOK_SECRET || 'Area37Secret2026';
+const WEBHOOK_SECRET = process.env.AGE_WEBHOOK_SECRET;
 
 const AGE_VERIFIED_ROLE_NAME = '18+ Verified';
 const UNVERIFIED_ROLE_NAME = '18+ Unverified';
 
-const PORT = 26111;
+const PORT = Number(process.env.AGE_WEBHOOK_PORT) || 26111;
 
 class AgeVerificationServer {
     constructor(client, database) {
@@ -38,6 +38,10 @@ class AgeVerificationServer {
     // ============================================================
 
     start() {
+        if (!WEBHOOK_SECRET) {
+            console.error('[AgeVerification] AGE_WEBHOOK_SECRET is not configured; webhook server will remain disabled.');
+            return false;
+        }
         this.server = http.createServer((req, res) => {
             if (
                 req.method !== 'POST' ||
@@ -75,6 +79,7 @@ class AgeVerificationServer {
                 err
             );
         });
+        return true;
     }
 
     stop() {

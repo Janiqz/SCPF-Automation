@@ -70,7 +70,14 @@
         "syncOnJoin": true,
         "syncOnVerify": true
       },
-      "loggingChannelId": "1470105704403566745"
+      "loggingChannelId": "1470105704403566745",
+      "facilityStatus": {
+        "enabled": true,
+        "channelId": "1146473651949031534",
+        "messageId": null,
+        "alertEveryone": false,
+        "lastAlertAt": 0
+      }
     },
     {
       "guildId": "1482931140603023510",

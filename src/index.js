@@ -21,6 +21,8 @@ const BackgroundSyncScheduler = require('./services/BackgroundSyncScheduler');
 const ConfigManager = require('./config/ConfigManager');
 const ApplicationManager = require('./services/ApplicationManager');
 const AgeVerificationServer = require('./services/AgeVerificationServer');
+const FacilityStateService = require('./services/FacilityStateService');
+const FacilityStatusPublisher = require('./services/FacilityStatusPublisher');
 
 // ============================================================
 // AGE ROLE CONFIGURATION
@@ -494,6 +496,16 @@ const database =
             database
         );
 
+    const facilityState =
+        new FacilityStateService();
+
+    const facilityStatus =
+        new FacilityStatusPublisher(
+            client,
+            facilityState,
+            configManager
+        );
+
     // ========================================================
     // STORE SERVICES
     // ========================================================
@@ -505,7 +517,9 @@ const database =
         applicationManager,
         rankSyncService,
         backgroundSync,
-        ageVerificationServer
+        ageVerificationServer,
+        facilityState,
+        facilityStatus
     };
 
     // ========================================================
@@ -710,6 +724,10 @@ const database =
 
             if (backgroundSync) {
                 backgroundSync.stop();
+            }
+
+            if (facilityStatus) {
+                facilityStatus.stop();
             }
 
             if (database) {

@@ -28,6 +28,10 @@ module.exports = {
         if (services.backgroundSync) {
             services.backgroundSync.start();
         }
+
+        if (services.facilityStatus) {
+            services.facilityStatus.start();
+        }
         
         console.log('\n✅ All systems operational!');
         console.log('═══════════════════════════════════════════════\n');

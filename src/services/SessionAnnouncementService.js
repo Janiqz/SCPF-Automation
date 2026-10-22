@@ -55,6 +55,25 @@ class SessionAnnouncementService {
         return `https://discord.com/channels/${guildId}/${settings.channelId}/${settings.messageId}`;
     }
 
+    async toggleNotifications(interaction) {
+        const config = this.loadConfig();
+        const roleId = String(config.subscriberRoleId || '');
+        if (!/^\d{16,20}$/.test(roleId)) {
+            throw new Error('The session notification role is not configured.');
+        }
+        if (!interaction.guild) {
+            throw new Error('Session notifications can only be changed inside the Discord server.');
+        }
+        const member = await interaction.guild.members.fetch(interaction.user.id);
+        const enabled = !member.roles.cache.has(roleId);
+        if (enabled) {
+            await member.roles.add(roleId, 'Member enabled Area 37 session notifications');
+        } else {
+            await member.roles.remove(roleId, 'Member disabled Area 37 session notifications');
+        }
+        return enabled;
+    }
+
     async start(interaction, type, suppliedReason) {
         const activityConfig = this.loadConfig();
         const template = activityConfig.types && activityConfig.types[type];

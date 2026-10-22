@@ -42,6 +42,10 @@ function snapshot(overrides = {}) {
     const payload = buildMessage(snapshot(), 1_030);
     assert.strictEqual(payload.components.length, 1);
     assert(payload.components[0].toJSON().components[0].url.includes('gameInstanceId=job-id'));
+    assert(payload.components[0].toJSON().components.some(component =>
+        component.custom_id === 'facility_toggle_session_notifications'
+        && component.label === 'Toggle Session Notifications'
+    ));
     const lastKnownPayload = buildMessage(snapshot(), 1_500);
     assert.strictEqual(lastKnownPayload.summary.stale, true);
     assert.strictEqual(lastKnownPayload.summary.level, 'degraded');
@@ -76,6 +80,36 @@ function snapshot(overrides = {}) {
     assert.strictEqual(roleMention.content, '<@&123456789012345678>');
     assert.deepStrictEqual(roleMention.allowedMentions.roles, ['123456789012345678']);
     assert.strictEqual(sessionService.buildMention({ notifyMode: 'none' }).content, '');
+
+    const subscriberRoleId = sessionService.loadConfig().subscriberRoleId;
+    const roleChanges = [];
+    let subscribed = false;
+    const notificationInteraction = {
+        user: { id: 'member' },
+        guild: {
+            members: {
+                fetch: async () => ({
+                    roles: {
+                        cache: { has: () => subscribed },
+                        add: async roleId => {
+                            roleChanges.push(['add', roleId]);
+                            subscribed = true;
+                        },
+                        remove: async roleId => {
+                            roleChanges.push(['remove', roleId]);
+                            subscribed = false;
+                        }
+                    }
+                })
+            }
+        }
+    };
+    assert.strictEqual(await sessionService.toggleNotifications(notificationInteraction), true);
+    assert.strictEqual(await sessionService.toggleNotifications(notificationInteraction), false);
+    assert.deepStrictEqual(roleChanges, [
+        ['add', subscriberRoleId],
+        ['remove', subscriberRoleId]
+    ]);
 
     let request;
     const service = new FacilityStateService({

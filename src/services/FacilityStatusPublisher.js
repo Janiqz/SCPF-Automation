@@ -4,6 +4,7 @@ const {
     ButtonStyle,
     EmbedBuilder
 } = require('discord.js');
+const activityConfig = require('../../config/activity.json');
 
 const CRITICAL_COLOUR = 0xd9363e;
 const DEGRADED_COLOUR = 0xe6a817;
@@ -129,13 +130,26 @@ function buildMessage(snapshot, nowSeconds, activity) {
     }
 
     const components = [];
+    const actionRow = new ActionRowBuilder();
     if (summary.placeId) {
         const joinUrl = summary.stale || !summary.jobId
             ? `https://www.roblox.com/games/start?placeId=${encodeURIComponent(summary.placeId)}`
             : `https://www.roblox.com/games/start?placeId=${encodeURIComponent(summary.placeId)}&gameInstanceId=${encodeURIComponent(summary.jobId)}`;
-        components.push(new ActionRowBuilder().addComponents(
+        actionRow.addComponents(
             new ButtonBuilder().setLabel('Join Facility').setStyle(ButtonStyle.Link).setURL(joinUrl)
-        ));
+        );
+    }
+    if (typeof activityConfig.subscriberRoleId === 'string'
+        && /^\d{16,20}$/.test(activityConfig.subscriberRoleId)) {
+        actionRow.addComponents(
+            new ButtonBuilder()
+                .setCustomId('facility_toggle_session_notifications')
+                .setLabel('Toggle Session Notifications')
+                .setStyle(ButtonStyle.Secondary)
+        );
+    }
+    if (actionRow.components.length > 0) {
+        components.push(actionRow);
     }
     return { embeds: [embed], components, summary };
 }

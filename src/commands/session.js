@@ -6,15 +6,7 @@ module.exports = {
         .setDescription('Start or end an Area 37 activity session')
         .addSubcommand(subcommand => subcommand
             .setName('start')
-            .setDescription('Start an activity session and send its configured notification')
-            .addStringOption(option => option
-                .setName('type')
-                .setDescription('Activity type')
-                .setRequired(true)
-                .addChoices(
-                    { name: 'Facility Session', value: 'standard' },
-                    { name: 'Paid Riot', value: 'paid-riot' }
-                ))
+            .setDescription('Start a facility session and send its configured notification')
             .addStringOption(option => option
                 .setName('reason')
                 .setDescription('Optional reason shown in the notification')
@@ -33,9 +25,8 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
         try {
             if (interaction.options.getSubcommand() === 'start') {
-                const type = interaction.options.getString('type', true);
                 const reason = interaction.options.getString('reason');
-                const activity = await sessionAnnouncements.start(interaction, type, reason);
+                const activity = await sessionAnnouncements.start(interaction, 'standard', reason);
                 return interaction.editReply(`✅ **${activity.displayName}** started and the notification was sent.`);
             }
             const activity = await sessionAnnouncements.end(interaction);

@@ -78,7 +78,7 @@ function snapshot(overrides = {}) {
         user: { id: 'member' },
         member: { roles: { cache: [{ name: 'Foundation Personnel' }] } }
     }), false);
-    const paidRiotMention = sessionService.buildMention(sessionService.loadConfig().types['paid-riot']);
+    const paidRiotMention = sessionService.buildMention(sessionService.loadConfig().paidRiotAlert);
     assert.strictEqual(paidRiotMention.content, '@everyone');
     assert(paidRiotMention.allowedMentions.parse.includes('everyone'));
     const roleMention = sessionService.buildMention({ notifyMode: 'role', notifyRoleId: '123456789012345678' });

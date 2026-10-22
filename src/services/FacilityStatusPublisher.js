@@ -50,6 +50,7 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
     const cafeteria = components.Cafeteria || {};
     const alarms = components.Alarms || {};
     const elevators = components.Elevators || {};
+    const paidRiot = components.PaidRiot || {};
     const scps = getScpSummary(components);
     const updatedAt = numeric(snapshot.UpdatedAt);
     const age = updatedAt > 0 ? Math.max(0, nowSeconds - updatedAt) : Infinity;
@@ -85,6 +86,11 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
         brokenElevators,
         disabledElevators,
         totalElevators,
+        paidRiot: {
+            active: paidRiot.Active === true,
+            startedAt: numeric(paidRiot.StartedAt),
+            endsAt: numeric(paidRiot.EndsAt)
+        },
         scps
     };
 }
@@ -137,6 +143,13 @@ function buildMessage(snapshot, nowSeconds, activity) {
         embed.addFields({
             name: 'Active Activity',
             value: `**${activity.statusLabel || activity.displayName || activity.type}**\n${activity.reason || 'No reason provided.'}\nStarted <t:${numeric(activity.startedAt)}:R>`,
+            inline: false
+        });
+    }
+    if (summary.paidRiot.active) {
+        embed.addFields({
+            name: 'Paid Riot',
+            value: `**Active**${summary.paidRiot.endsAt ? ` • ends <t:${summary.paidRiot.endsAt}:R>` : ''}`,
             inline: false
         });
     }
@@ -274,6 +287,27 @@ class FacilityStatusPublisher {
                 allowedMentions: mention.allowedMentions
             });
             settings.lastAlertAt = now;
+            this.configManager.addOrUpdateServer(config);
+        }
+        if (payload.summary.paidRiot.active
+            && numeric(settings.lastPaidRiotEndsAt) !== payload.summary.paidRiot.endsAt) {
+            const riotConfig = activityConfig.paidRiotAlert || {};
+            const mention = buildConfiguredMention(riotConfig);
+            const embedConfig = activityConfig.sessionEmbed || {};
+            const riotEmbed = new EmbedBuilder()
+                .setColor(Number(embedConfig.colour) || 0xffffff)
+                .setTitle(String(riotConfig.title || 'Paid Riot Initiated'))
+                .setDescription(String(riotConfig.description || 'A paid riot is now active at Area 37.'))
+                .setTimestamp();
+            if (typeof embedConfig.imageUrl === 'string' && /^https:\/\//.test(embedConfig.imageUrl)) {
+                riotEmbed.setImage(embedConfig.imageUrl);
+            }
+            await channel.send({
+                content: mention.content || undefined,
+                allowedMentions: mention.allowedMentions,
+                embeds: [riotEmbed]
+            });
+            settings.lastPaidRiotEndsAt = payload.summary.paidRiot.endsAt;
             this.configManager.addOrUpdateServer(config);
         }
         return payload.summary;

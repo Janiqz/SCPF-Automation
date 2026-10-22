@@ -12,6 +12,12 @@
       "notifyRoleId": ""
     }
   },
+  "paidRiotAlert": {
+    "title": "Paid Riot Initiated",
+    "description": "A paid riot is now active at Area 37. Respond through the live facility status below.",
+    "notifyMode": "everyone",
+    "notifyRoleId": ""
+  },
   "authorizedRoleNames": [
     "O5 Council",
     "Developer",
@@ -29,18 +35,6 @@
       "endTitle": "Area 37 Session Ended",
       "endDescription": "The active Area 37 session has concluded.",
       "notifyMode": "none",
-      "notifyRoleId": ""
-    },
-    "paid-riot": {
-      "displayName": "Paid Riot",
-      "statusLabel": "Paid Riot Active",
-      "colour": 14431557,
-      "defaultReason": "A paid riot is now active at Area 37.",
-      "startTitle": "Paid Riot Initiated",
-      "startDescription": "{reason}\n\nRespond through the live facility status below.",
-      "endTitle": "Paid Riot Ended",
-      "endDescription": "The paid riot event has concluded.",
-      "notifyMode": "everyone",
       "notifyRoleId": ""
     }
   }

@@ -36,6 +36,10 @@ module.exports = {
         if (services.sessionAnnouncements) {
             services.sessionAnnouncements.startCleanup();
         }
+
+        if (services.quotaNotifications) {
+            services.quotaNotifications.start();
+        }
         
         console.log('\n✅ All systems operational!');
         console.log('═══════════════════════════════════════════════\n');

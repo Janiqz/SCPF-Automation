@@ -24,6 +24,7 @@ const AgeVerificationServer = require('./services/AgeVerificationServer');
 const FacilityStateService = require('./services/FacilityStateService');
 const FacilityStatusPublisher = require('./services/FacilityStatusPublisher');
 const SessionAnnouncementService = require('./services/SessionAnnouncementService');
+const QuotaNotificationService = require('./services/QuotaNotificationService');
 
 // ============================================================
 // AGE ROLE CONFIGURATION
@@ -514,6 +515,9 @@ const database =
             facilityStatus
         );
 
+    const quotaNotifications =
+        new QuotaNotificationService(client);
+
     // ========================================================
     // STORE SERVICES
     // ========================================================
@@ -528,7 +532,8 @@ const database =
         ageVerificationServer,
         facilityState,
         facilityStatus,
-        sessionAnnouncements
+        sessionAnnouncements,
+        quotaNotifications
     };
 
     // ========================================================
@@ -741,6 +746,10 @@ const database =
 
             if (sessionAnnouncements) {
                 sessionAnnouncements.stopCleanup();
+            }
+
+            if (quotaNotifications) {
+                quotaNotifications.stop();
             }
 
             if (database) {

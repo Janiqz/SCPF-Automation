@@ -35,6 +35,18 @@ function snapshot(overrides = {}) {
     const severeDamageData = snapshot();
     severeDamageData.Components = { ...severeDamageData.Components, Lights: { BrokenCount: 40, TotalLights: 389 } };
     assert.strictEqual(summarizeSnapshot(severeDamageData, 1_030).level, 'degraded');
+    const brokenElevatorData = snapshot();
+    brokenElevatorData.Components = {
+        ...brokenElevatorData.Components,
+        Elevators: { BrokenCount: 1, DisabledCount: 0, TotalElevators: 12 }
+    };
+    assert.strictEqual(summarizeSnapshot(brokenElevatorData, 1_030).level, 'degraded');
+    const disabledElevatorData = snapshot();
+    disabledElevatorData.Components = {
+        ...disabledElevatorData.Components,
+        Elevators: { BrokenCount: 0, DisabledCount: 12, TotalElevators: 12 }
+    };
+    assert.strictEqual(summarizeSnapshot(disabledElevatorData, 1_030).level, 'stable');
     assert.strictEqual(formatAlarmName('BreachAlarmPanel'), 'Breach Alarm');
     assert.strictEqual(formatAlarmName('CodeYellowAlarmPanel'), 'Code Yellow Alarm');
 

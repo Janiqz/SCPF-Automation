@@ -66,8 +66,7 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
     const totalElevators = numeric(elevators.TotalElevators);
     const thresholds = activityConfig.facilityHealth || {};
     const lightsDegradedAt = Math.max(1, numeric(thresholds.brokenLightsDegraded, 40));
-    const elevatorsDegradedAt = Math.max(1, numeric(thresholds.brokenElevatorsDegraded, 3));
-    const disabledElevatorsDegradedAt = Math.max(1, numeric(thresholds.disabledElevatorsDegraded, 4));
+    const elevatorsDegradedAt = Math.max(1, numeric(thresholds.brokenElevatorsDegraded, 1));
     const stockRatioDegradedAt = Math.min(1, Math.max(0, numeric(thresholds.cafeteriaStockRatioDegraded, 0.1)));
     const lowStock = capacity > 0 && stock / capacity <= stockRatioDegradedAt;
 
@@ -75,7 +74,6 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
     if (activeAlarm || scps.breached.length > 0 || scps.incidents.length > 0) level = 'critical';
     else if (brokenLights >= lightsDegradedAt
         || brokenElevators >= elevatorsDegradedAt
-        || disabledElevators >= disabledElevatorsDegradedAt
         || lowStock) level = 'degraded';
 
     return {

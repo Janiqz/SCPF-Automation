@@ -7,8 +7,7 @@
   },
   "facilityHealth": {
     "brokenLightsDegraded": 40,
-    "brokenElevatorsDegraded": 3,
-    "disabledElevatorsDegraded": 4,
+    "brokenElevatorsDegraded": 1,
     "cafeteriaStockRatioDegraded": 0.1
   },
   "facilityAlerts": {

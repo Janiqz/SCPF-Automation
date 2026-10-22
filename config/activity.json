@@ -2,21 +2,27 @@
   "subscriberRoleId": "1562905845308592239",
   "sessionEmbed": {
     "colour": 16777215,
-    "imageUrl": "https://cdn.discordapp.com/attachments/1146473651949031534/1562911525214359673/ThumbnailCoverAnnouncement.png?ex=6adbb649&is=6ada64c9&hm=7aca4631ee4f3584d03d531cd17a8ef4dc6b087e3bcf423e37e18832c925850a&",
+    "imageFile": "assets/ThumbnailCoverAnnouncement.png",
     "deleteAfterMinutes": 30
+  },
+  "facilityHealth": {
+    "brokenLightsDegraded": 40,
+    "brokenElevatorsDegraded": 3,
+    "disabledElevatorsDegraded": 4,
+    "cafeteriaStockRatioDegraded": 0.1
   },
   "facilityAlerts": {
     "critical": {
       "message": "Facility stability has reached **critical**. Review the live status above.",
-      "notifyMode": "none",
-      "notifyRoleId": ""
+      "notifyMode": "role",
+      "notifyRoleId": "1562905845308592239"
     }
   },
   "paidRiotAlert": {
     "title": "Paid Riot Initiated",
     "description": "A paid riot is now active at Area 37. Respond through the live facility status below.",
-    "notifyMode": "everyone",
-    "notifyRoleId": ""
+    "notifyMode": "role",
+    "notifyRoleId": "1562905845308592239"
   },
   "authorizedRoleNames": [
     "O5 Council",
@@ -34,8 +40,8 @@
       "startDescription": "{reason}\n\nUse the live facility status to join the active site.",
       "endTitle": "Area 37 Session Ended",
       "endDescription": "The active Area 37 session has concluded.",
-      "notifyMode": "none",
-      "notifyRoleId": ""
+      "notifyMode": "role",
+      "notifyRoleId": "1562905845308592239"
     }
   }
 }

@@ -29,9 +29,12 @@ function snapshot(overrides = {}) {
 }
 
 (async () => {
-    const degraded = summarizeSnapshot(snapshot(), 1_030);
-    assert.strictEqual(degraded.level, 'degraded');
-    assert.strictEqual(degraded.scps.tracked.length, 1);
+    const minorDamage = summarizeSnapshot(snapshot(), 1_030);
+    assert.strictEqual(minorDamage.level, 'stable');
+    assert.strictEqual(minorDamage.scps.tracked.length, 1);
+    const severeDamageData = snapshot();
+    severeDamageData.Components = { ...severeDamageData.Components, Lights: { BrokenCount: 40, TotalLights: 389 } };
+    assert.strictEqual(summarizeSnapshot(severeDamageData, 1_030).level, 'degraded');
     assert.strictEqual(formatAlarmName('BreachAlarmPanel'), 'Breach Alarm');
     assert.strictEqual(formatAlarmName('CodeYellowAlarmPanel'), 'Code Yellow Alarm');
 
@@ -43,7 +46,7 @@ function snapshot(overrides = {}) {
     displacedData.Components = { ...displacedData.Components, 'SCP:SCP-173': { Status: 'displaced' } };
     assert.strictEqual(summarizeSnapshot(displacedData, 1_030).level, 'critical');
 
-    assert.strictEqual(summarizeSnapshot(snapshot(), 1_500).level, 'degraded');
+    assert.strictEqual(summarizeSnapshot(snapshot(), 1_500).level, 'stable');
     const payload = buildMessage(snapshot(), 1_030);
     assert.strictEqual(payload.components.length, 1);
     assert(payload.components[0].toJSON().components[0].url.includes('gameInstanceId=job-id'));
@@ -53,7 +56,7 @@ function snapshot(overrides = {}) {
     ));
     const lastKnownPayload = buildMessage(snapshot(), 1_500);
     assert.strictEqual(lastKnownPayload.summary.stale, true);
-    assert.strictEqual(lastKnownPayload.summary.level, 'degraded');
+    assert.strictEqual(lastKnownPayload.summary.level, 'stable');
     assert(!lastKnownPayload.embeds[0].toJSON().title.includes('Offline'));
     assert(!lastKnownPayload.components[0].toJSON().components[0].url.includes('gameInstanceId'));
     const activityPayload = buildMessage(snapshot(), 1_030, {
@@ -79,14 +82,14 @@ function snapshot(overrides = {}) {
         member: { roles: { cache: [{ name: 'Foundation Personnel' }] } }
     }), false);
     const paidRiotMention = sessionService.buildMention(sessionService.loadConfig().paidRiotAlert);
-    assert.strictEqual(paidRiotMention.content, '@everyone');
-    assert(paidRiotMention.allowedMentions.parse.includes('everyone'));
+    assert.strictEqual(paidRiotMention.content, '<@&1562905845308592239>');
+    assert.deepStrictEqual(paidRiotMention.allowedMentions.roles, ['1562905845308592239']);
     const roleMention = sessionService.buildMention({ notifyMode: 'role', notifyRoleId: '123456789012345678' });
     assert.strictEqual(roleMention.content, '<@&123456789012345678>');
     assert.deepStrictEqual(roleMention.allowedMentions.roles, ['123456789012345678']);
     assert.strictEqual(sessionService.buildMention({ notifyMode: 'none' }).content, '');
     const criticalAlert = sessionService.loadConfig().facilityAlerts.critical;
-    assert.strictEqual(buildConfiguredMention(criticalAlert).content, '');
+    assert.strictEqual(buildConfiguredMention(criticalAlert).content, '<@&1562905845308592239>');
     assert.deepStrictEqual(buildConfiguredMention(criticalAlert).allowedMentions.parse, []);
 
     const subscriberRoleId = sessionService.loadConfig().subscriberRoleId;
@@ -179,7 +182,8 @@ function snapshot(overrides = {}) {
     assert.strictEqual(endedActivity.active, false);
     assert(endedActivity.deleteAt - endedActivity.endedAt === 30 * 60);
     assert.strictEqual(editedSession.embeds[0].toJSON().color, 0xffffff);
-    assert(editedSession.embeds[0].toJSON().image.url.includes('ThumbnailCoverAnnouncement.png'));
+    assert.strictEqual(editedSession.embeds[0].toJSON().image.url, 'attachment://ThumbnailCoverAnnouncement.png');
+    assert.strictEqual(editedSession.files[0].name, 'ThumbnailCoverAnnouncement.png');
     lifecycleService.stopCleanup();
 
     let unauthorizedReply;

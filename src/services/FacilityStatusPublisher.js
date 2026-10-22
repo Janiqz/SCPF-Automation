@@ -5,6 +5,7 @@ const {
     EmbedBuilder
 } = require('discord.js');
 const activityConfig = require('../../config/activity.json');
+const { resolveEmbedImage } = require('../utils/embedImage');
 
 const CRITICAL_COLOUR = 0xd9363e;
 const DEGRADED_COLOUR = 0xe6a817;
@@ -63,11 +64,19 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
     const brokenElevators = numeric(elevators.BrokenCount);
     const disabledElevators = numeric(elevators.DisabledCount);
     const totalElevators = numeric(elevators.TotalElevators);
-    const lowStock = capacity > 0 && stock / capacity < 0.3;
+    const thresholds = activityConfig.facilityHealth || {};
+    const lightsDegradedAt = Math.max(1, numeric(thresholds.brokenLightsDegraded, 40));
+    const elevatorsDegradedAt = Math.max(1, numeric(thresholds.brokenElevatorsDegraded, 3));
+    const disabledElevatorsDegradedAt = Math.max(1, numeric(thresholds.disabledElevatorsDegraded, 4));
+    const stockRatioDegradedAt = Math.min(1, Math.max(0, numeric(thresholds.cafeteriaStockRatioDegraded, 0.1)));
+    const lowStock = capacity > 0 && stock / capacity <= stockRatioDegradedAt;
 
     let level = 'stable';
     if (activeAlarm || scps.breached.length > 0 || scps.incidents.length > 0) level = 'critical';
-    else if (brokenLights > 0 || brokenElevators > 0 || disabledElevators > 0 || lowStock) level = 'degraded';
+    else if (brokenLights >= lightsDegradedAt
+        || brokenElevators >= elevatorsDegradedAt
+        || disabledElevators >= disabledElevatorsDegradedAt
+        || lowStock) level = 'degraded';
 
     return {
         level,
@@ -294,18 +303,18 @@ class FacilityStatusPublisher {
             const riotConfig = activityConfig.paidRiotAlert || {};
             const mention = buildConfiguredMention(riotConfig);
             const embedConfig = activityConfig.sessionEmbed || {};
+            const banner = resolveEmbedImage(embedConfig);
             const riotEmbed = new EmbedBuilder()
                 .setColor(Number(embedConfig.colour) || 0xffffff)
                 .setTitle(String(riotConfig.title || 'Paid Riot Initiated'))
                 .setDescription(String(riotConfig.description || 'A paid riot is now active at Area 37.'))
                 .setTimestamp();
-            if (typeof embedConfig.imageUrl === 'string' && /^https:\/\//.test(embedConfig.imageUrl)) {
-                riotEmbed.setImage(embedConfig.imageUrl);
-            }
+            if (banner.url) riotEmbed.setImage(banner.url);
             await channel.send({
                 content: mention.content || undefined,
                 allowedMentions: mention.allowedMentions,
-                embeds: [riotEmbed]
+                embeds: [riotEmbed],
+                files: banner.files
             });
             settings.lastPaidRiotEndsAt = payload.summary.paidRiot.endsAt;
             this.configManager.addOrUpdateServer(config);

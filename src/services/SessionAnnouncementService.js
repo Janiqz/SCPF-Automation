@@ -6,6 +6,7 @@ const {
     ButtonStyle,
     EmbedBuilder
 } = require('discord.js');
+const { resolveEmbedImage } = require('../utils/embedImage');
 
 class SessionAnnouncementService {
     constructor(client, configManager, facilityStatus, options = {}) {
@@ -186,6 +187,7 @@ class SessionAnnouncementService {
         const context = { reason, userId: interaction.user.id, displayName: settings.activity.displayName };
         const mention = this.buildMention(template);
         const embedConfig = activityConfig.sessionEmbed || {};
+        const banner = resolveEmbedImage(embedConfig);
         const embed = new EmbedBuilder()
             .setColor(Number(embedConfig.colour) || 0xffffff)
             .setTitle(this.render(template.startTitle, context))
@@ -196,9 +198,7 @@ class SessionAnnouncementService {
                 { name: 'Started', value: `<t:${now}:R>`, inline: true }
             )
             .setTimestamp();
-        if (typeof embedConfig.imageUrl === 'string' && /^https:\/\//.test(embedConfig.imageUrl)) {
-            embed.setImage(embedConfig.imageUrl);
-        }
+        if (banner.url) embed.setImage(banner.url);
         const components = [];
         const statusUrl = this.getStatusUrl(interaction.guildId, settings);
         if (statusUrl) {
@@ -210,7 +210,8 @@ class SessionAnnouncementService {
             content: mention.content || undefined,
             allowedMentions: mention.allowedMentions,
             embeds: [embed],
-            components
+            components,
+            files: banner.files
         });
         settings.activity.announcementChannelId = channel.id;
         settings.activity.announcementMessageId = announcement.id;
@@ -235,6 +236,7 @@ class SessionAnnouncementService {
         activity.endedAt = Math.floor(Date.now() / 1000);
         activity.endedBy = interaction.user.id;
         const embedConfig = activityConfig.sessionEmbed || {};
+        const banner = resolveEmbedImage(embedConfig);
         const deleteAfterMinutes = Math.max(1, Number(embedConfig.deleteAfterMinutes) || 30);
         activity.deleteAt = activity.endedAt + Math.round(deleteAfterMinutes * 60);
         const result = this.configManager.addOrUpdateServer(serverConfig);
@@ -253,15 +255,15 @@ class SessionAnnouncementService {
                 .setTitle(this.render(template.endTitle || 'Area 37 Session Ended', context))
                 .setDescription(this.render(template.endDescription || 'The active session has concluded.', context))
                 .setTimestamp();
-            if (typeof embedConfig.imageUrl === 'string' && /^https:\/\//.test(embedConfig.imageUrl)) {
-                embed.setImage(embedConfig.imageUrl);
-            }
+            if (banner.url) embed.setImage(banner.url);
             const announcement = await channel.messages.fetch(activity.announcementMessageId);
             await announcement.edit({
                 content: null,
                 embeds: [embed],
                 components: [],
-                allowedMentions: { parse: [], roles: [] }
+                allowedMentions: { parse: [], roles: [] },
+                attachments: [],
+                files: banner.files
             });
         }
         this.scheduleDeletion(interaction.guildId, activity);

@@ -19,18 +19,21 @@ module.exports = {
                 .setRequired(true))
             .addBooleanOption(option => option
                 .setName('emergency-pings')
-                .setDescription('Ping @everyone once when the facility enters a critical state')
+                .setDescription('Send the configured alert when the facility enters a critical state')
                 .setRequired(true)))
         .addSubcommand(subcommand => subcommand
             .setName('refresh')
             .setDescription('Refresh the configured facility status immediately'))
         .addSubcommand(subcommand => subcommand
             .setName('alerts')
-            .setDescription('Enable or disable transition-based emergency pings')
+            .setDescription('Enable or disable transition-based emergency alerts')
             .addBooleanOption(option => option
                 .setName('enabled')
-                .setDescription('Whether a new critical state may ping @everyone')
+                .setDescription('Whether a new critical state sends the configured alert')
                 .setRequired(true)))
+        .addSubcommand(subcommand => subcommand
+            .setName('reset-state')
+            .setDescription('Request a safe reset of the live facility state'))
         .addSubcommand(subcommand => subcommand
             .setName('disable')
             .setDescription('Disable the live facility status embed')),
@@ -46,7 +49,8 @@ module.exports = {
 
         try {
             const subcommand = interaction.options.getSubcommand();
-            if ((subcommand === 'setup' || subcommand === 'refresh') && !facilityState.isConfigured()) {
+            if ((subcommand === 'setup' || subcommand === 'refresh' || subcommand === 'reset-state')
+                && !facilityState.isConfigured()) {
                 return interaction.editReply(`❌ ${facilityState.getConfigurationError()}`);
             }
             if (subcommand === 'setup') {
@@ -58,7 +62,11 @@ module.exports = {
             if (subcommand === 'alerts') {
                 const enabled = interaction.options.getBoolean('enabled', true);
                 facilityStatus.setAlerts(interaction.guildId, enabled);
-                return interaction.editReply(`✅ Emergency pings are now **${enabled ? 'enabled' : 'disabled'}**.`);
+                return interaction.editReply(`✅ Emergency alerts are now **${enabled ? 'enabled' : 'disabled'}**.`);
+            }
+            if (subcommand === 'reset-state') {
+                await facilityState.requestReset(interaction.user.id);
+                return interaction.editReply('✅ Facility reset requested. The active canonical Roblox server will apply it shortly.');
             }
             if (subcommand === 'disable') {
                 await facilityStatus.disable(interaction.guildId);

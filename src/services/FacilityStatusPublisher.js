@@ -18,6 +18,18 @@ function numeric(value, fallback = 0) {
     return Number.isFinite(number) ? number : fallback;
 }
 
+function buildConfiguredMention(template = {}) {
+    const mode = String(template.notifyMode || 'none').toLowerCase();
+    if (mode === 'everyone') {
+        return { content: '@everyone', allowedMentions: { parse: ['everyone'], roles: [] } };
+    }
+    if (mode === 'role' && /^\d{16,20}$/.test(String(template.notifyRoleId || ''))) {
+        const roleId = String(template.notifyRoleId);
+        return { content: `<@&${roleId}>`, allowedMentions: { parse: [], roles: [roleId] } };
+    }
+    return { content: '', allowedMentions: { parse: [], roles: [] } };
+}
+
 function getScpSummary(components) {
     const tracked = [];
     const breached = [];
@@ -116,7 +128,7 @@ function buildMessage(snapshot, nowSeconds, activity) {
             { name: 'Lighting', value: `${summary.brokenLights}${summary.totalLights ? ` / ${summary.totalLights}` : ''} broken`, inline: true },
             { name: 'Cafeteria', value: summary.capacity ? `${summary.stock} / ${summary.capacity} stocked` : 'No stock data', inline: true },
             { name: 'Elevators', value: `${summary.brokenElevators} broken • ${summary.disabledElevators} disabled • ${summary.totalElevators} tracked`, inline: true },
-            { name: 'Last update', value: `${updatedText} • revision ${summary.revision}`, inline: false }
+            { name: 'Last update', value: updatedText, inline: false }
         )
         .setFooter({ text: 'Area 37 Facility Status • updates automatically' })
         .setTimestamp(new Date(summary.updatedAt > 0 ? summary.updatedAt * 1000 : Date.now()));
@@ -254,9 +266,12 @@ class FacilityStatusPublisher {
         const cooldownPassed = now - numeric(settings.lastAlertAt) >= ALERT_COOLDOWN_SECONDS;
         if (settings.alertEveryone === true && previousLevel && previousLevel !== 'critical'
             && payload.summary.level === 'critical' && cooldownPassed) {
+            const alertConfig = activityConfig.facilityAlerts && activityConfig.facilityAlerts.critical || {};
+            const mention = buildConfiguredMention(alertConfig);
+            const message = String(alertConfig.message || 'Facility stability has reached **critical**. Review the live status above.');
             await channel.send({
-                content: '@everyone Facility stability has reached **critical**. Review the live status above.',
-                allowedMentions: { parse: ['everyone'] }
+                content: [mention.content, message].filter(Boolean).join(' '),
+                allowedMentions: mention.allowedMentions
             });
             settings.lastAlertAt = now;
             this.configManager.addOrUpdateServer(config);
@@ -346,3 +361,4 @@ module.exports = FacilityStatusPublisher;
 module.exports.buildMessage = buildMessage;
 module.exports.summarizeSnapshot = summarizeSnapshot;
 module.exports.formatAlarmName = formatAlarmName;
+module.exports.buildConfiguredMention = buildConfiguredMention;

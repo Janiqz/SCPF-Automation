@@ -13,6 +13,8 @@ class SessionAnnouncementService {
         this.configManager = configManager;
         this.facilityStatus = facilityStatus;
         this.configPath = options.configPath || path.join(__dirname, '../../config/activity.json');
+        this.deletionTimers = new Map();
+        this.cleanupInterval = null;
     }
 
     loadConfig() {
@@ -74,6 +76,66 @@ class SessionAnnouncementService {
         return enabled;
     }
 
+    startCleanup() {
+        if (this.cleanupInterval) return;
+        this.restoreDeletionTimers();
+        this.cleanupInterval = setInterval(() => this.restoreDeletionTimers(), 60 * 1000);
+        if (typeof this.cleanupInterval.unref === 'function') this.cleanupInterval.unref();
+    }
+
+    stopCleanup() {
+        if (this.cleanupInterval) clearInterval(this.cleanupInterval);
+        this.cleanupInterval = null;
+        for (const timer of this.deletionTimers.values()) clearTimeout(timer);
+        this.deletionTimers.clear();
+    }
+
+    restoreDeletionTimers() {
+        for (const serverConfig of this.configManager.getAllServerConfigs()) {
+            const activity = serverConfig.facilityStatus && serverConfig.facilityStatus.activity;
+            if (activity && activity.active === false && activity.deleteAt
+                && activity.announcementChannelId && activity.announcementMessageId) {
+                this.scheduleDeletion(serverConfig.guildId, activity);
+            }
+        }
+    }
+
+    scheduleDeletion(guildId, activity) {
+        if (!activity.announcementChannelId || !activity.announcementMessageId || !activity.deleteAt) return;
+        const existing = this.deletionTimers.get(guildId);
+        if (existing) clearTimeout(existing);
+        const delay = Math.max(0, Number(activity.deleteAt) * 1000 - Date.now());
+        const timer = setTimeout(() => {
+            this.deletionTimers.delete(guildId);
+            this.deleteAnnouncement(guildId).catch(error => {
+                console.warn('[Session] Could not delete ended session message:', error.message);
+            });
+        }, Math.min(delay, 2_147_000_000));
+        if (typeof timer.unref === 'function') timer.unref();
+        this.deletionTimers.set(guildId, timer);
+    }
+
+    async deleteAnnouncement(guildId) {
+        const serverConfig = this.configManager.getServerConfig(guildId);
+        const activity = serverConfig && serverConfig.facilityStatus && serverConfig.facilityStatus.activity;
+        if (!activity || activity.active !== false || !activity.deleteAt
+            || Number(activity.deleteAt) * 1000 > Date.now()) return false;
+        try {
+            const channel = await this.client.channels.fetch(activity.announcementChannelId);
+            if (channel && channel.isTextBased()) {
+                const message = await channel.messages.fetch(activity.announcementMessageId);
+                await message.delete();
+            }
+        } catch (error) {
+            if (!error || error.code !== 10008) throw error;
+        }
+        delete activity.announcementMessageId;
+        delete activity.announcementChannelId;
+        delete activity.deleteAt;
+        this.configManager.addOrUpdateServer(serverConfig);
+        return true;
+    }
+
     async start(interaction, type, suppliedReason) {
         const activityConfig = this.loadConfig();
         const template = activityConfig.types && activityConfig.types[type];
@@ -81,6 +143,27 @@ class SessionAnnouncementService {
         const serverConfig = this.configManager.getServerConfig(interaction.guildId);
         const settings = serverConfig && serverConfig.facilityStatus;
         if (!settings || !settings.enabled) throw new Error('Facility status must be enabled before starting a session.');
+        if (settings.activity && settings.activity.active === true) {
+            throw new Error('A facility session is already active. End it before starting another.');
+        }
+        const oldTimer = this.deletionTimers.get(interaction.guildId);
+        if (oldTimer) clearTimeout(oldTimer);
+        this.deletionTimers.delete(interaction.guildId);
+        const previousActivity = settings.activity;
+        if (previousActivity && previousActivity.active === false
+            && previousActivity.announcementChannelId && previousActivity.announcementMessageId) {
+            try {
+                const previousChannel = await this.client.channels.fetch(previousActivity.announcementChannelId);
+                if (previousChannel && previousChannel.isTextBased()) {
+                    const previousMessage = await previousChannel.messages.fetch(previousActivity.announcementMessageId);
+                    await previousMessage.delete();
+                }
+            } catch (error) {
+                if (!error || error.code !== 10008) {
+                    console.warn('[Session] Could not remove the previous ended session message:', error.message);
+                }
+            }
+        }
 
         const reason = suppliedReason && suppliedReason.trim()
             ? suppliedReason.trim().slice(0, 500)
@@ -102,8 +185,9 @@ class SessionAnnouncementService {
         if (!channel || !channel.isTextBased()) throw new Error('The configured facility channel is unavailable.');
         const context = { reason, userId: interaction.user.id, displayName: settings.activity.displayName };
         const mention = this.buildMention(template);
+        const embedConfig = activityConfig.sessionEmbed || {};
         const embed = new EmbedBuilder()
-            .setColor(Number(template.colour) || 0x3498db)
+            .setColor(Number(embedConfig.colour) || 0xffffff)
             .setTitle(this.render(template.startTitle, context))
             .setDescription(this.render(template.startDescription, context))
             .addFields(
@@ -112,6 +196,9 @@ class SessionAnnouncementService {
                 { name: 'Started', value: `<t:${now}:R>`, inline: true }
             )
             .setTimestamp();
+        if (typeof embedConfig.imageUrl === 'string' && /^https:\/\//.test(embedConfig.imageUrl)) {
+            embed.setImage(embedConfig.imageUrl);
+        }
         const components = [];
         const statusUrl = this.getStatusUrl(interaction.guildId, settings);
         if (statusUrl) {
@@ -119,12 +206,18 @@ class SessionAnnouncementService {
                 new ButtonBuilder().setLabel('View Live Facility Status').setStyle(ButtonStyle.Link).setURL(statusUrl)
             ));
         }
-        await channel.send({
+        const announcement = await channel.send({
             content: mention.content || undefined,
             allowedMentions: mention.allowedMentions,
             embeds: [embed],
             components
         });
+        settings.activity.announcementChannelId = channel.id;
+        settings.activity.announcementMessageId = announcement.id;
+        const saveAnnouncement = this.configManager.addOrUpdateServer(serverConfig);
+        if (!saveAnnouncement.success) {
+            console.warn('[Session] Could not persist the announcement message ID:', saveAnnouncement.error);
+        }
         await this.facilityStatus.refreshGuild(interaction.guildId).catch(error => {
             console.warn('[Session] Facility embed refresh will retry automatically:', error.message);
         });
@@ -141,23 +234,37 @@ class SessionAnnouncementService {
         activity.active = false;
         activity.endedAt = Math.floor(Date.now() / 1000);
         activity.endedBy = interaction.user.id;
+        const embedConfig = activityConfig.sessionEmbed || {};
+        const deleteAfterMinutes = Math.max(1, Number(embedConfig.deleteAfterMinutes) || 30);
+        activity.deleteAt = activity.endedAt + Math.round(deleteAfterMinutes * 60);
         const result = this.configManager.addOrUpdateServer(serverConfig);
         if (!result.success) throw new Error(`Could not save session state: ${result.error}`);
 
-        const channel = await this.client.channels.fetch(settings.channelId);
-        if (channel && channel.isTextBased()) {
+        const channelId = activity.announcementChannelId || settings.channelId;
+        const channel = await this.client.channels.fetch(channelId);
+        if (channel && channel.isTextBased() && activity.announcementMessageId) {
             const context = {
                 reason: activity.reason,
                 userId: interaction.user.id,
                 displayName: activity.displayName
             };
             const embed = new EmbedBuilder()
-                .setColor(0x69707d)
+                .setColor(Number(embedConfig.colour) || 0xffffff)
                 .setTitle(this.render(template.endTitle || 'Area 37 Session Ended', context))
                 .setDescription(this.render(template.endDescription || 'The active session has concluded.', context))
                 .setTimestamp();
-            await channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
+            if (typeof embedConfig.imageUrl === 'string' && /^https:\/\//.test(embedConfig.imageUrl)) {
+                embed.setImage(embedConfig.imageUrl);
+            }
+            const announcement = await channel.messages.fetch(activity.announcementMessageId);
+            await announcement.edit({
+                content: null,
+                embeds: [embed],
+                components: [],
+                allowedMentions: { parse: [], roles: [] }
+            });
         }
+        this.scheduleDeletion(interaction.guildId, activity);
         await this.facilityStatus.refreshGuild(interaction.guildId).catch(error => {
             console.warn('[Session] Facility embed refresh will retry automatically:', error.message);
         });

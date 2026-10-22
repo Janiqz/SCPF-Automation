@@ -1,5 +1,17 @@
 {
   "subscriberRoleId": "1562905845308592239",
+  "sessionEmbed": {
+    "colour": 16777215,
+    "imageUrl": "https://cdn.discordapp.com/attachments/1146473651949031534/1562911525214359673/ThumbnailCoverAnnouncement.png?ex=6adbb649&is=6ada64c9&hm=7aca4631ee4f3584d03d531cd17a8ef4dc6b087e3bcf423e37e18832c925850a&",
+    "deleteAfterMinutes": 30
+  },
+  "facilityAlerts": {
+    "critical": {
+      "message": "Facility stability has reached **critical**. Review the live status above.",
+      "notifyMode": "none",
+      "notifyRoleId": ""
+    }
+  },
   "authorizedRoleNames": [
     "O5 Council",
     "Developer",

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { randomUUID } = require('crypto');
 
 const DEFAULT_DATASTORE = 'FacilityState_v1';
 const DEFAULT_ENTRY = 'canonical';
@@ -32,6 +33,12 @@ class FacilityStateService {
         return `https://apis.roblox.com/cloud/v2/universes/${universe}/data-stores/${store}/entries/${entry}`;
     }
 
+    getControlUrl() {
+        const universe = encodeURIComponent(this.universeId);
+        const store = encodeURIComponent(this.dataStore);
+        return `https://apis.roblox.com/cloud/v2/universes/${universe}/data-stores/${store}/entries/control`;
+    }
+
     async fetchSnapshot() {
         const configurationError = this.getConfigurationError();
         if (configurationError) throw new Error(configurationError);
@@ -49,6 +56,39 @@ class FacilityStateService {
         } catch (error) {
             if (error.response) {
                 throw new Error(`Roblox Open Cloud request failed (${error.response.status}).`);
+            }
+            throw error;
+        }
+    }
+
+    async requestReset(requestedBy) {
+        const configurationError = this.getConfigurationError();
+        if (configurationError) throw new Error(configurationError);
+
+        const command = {
+            SchemaVersion: 1,
+            Action: 'reset',
+            RequestId: randomUUID(),
+            RequestedAt: Math.floor(Date.now() / 1000),
+            RequestedBy: String(requestedBy || '')
+        };
+        try {
+            await this.http.patch(`${this.getControlUrl()}?allowMissing=true`, {
+                value: command
+            }, {
+                headers: {
+                    'x-api-key': this.apiKey,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 10000
+            });
+            return command;
+        } catch (error) {
+            if (error.response) {
+                if (error.response.status === 403) {
+                    throw new Error('The Roblox Open Cloud key needs universe-datastores.objects:update permission.');
+                }
+                throw new Error(`Roblox Open Cloud reset request failed (${error.response.status}).`);
             }
             throw error;
         }

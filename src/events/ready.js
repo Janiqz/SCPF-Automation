@@ -32,6 +32,10 @@ module.exports = {
         if (services.facilityStatus) {
             services.facilityStatus.start();
         }
+
+        if (services.sessionAnnouncements) {
+            services.sessionAnnouncements.startCleanup();
+        }
         
         console.log('\n✅ All systems operational!');
         console.log('═══════════════════════════════════════════════\n');

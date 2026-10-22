@@ -739,6 +739,10 @@ const database =
                 facilityStatus.stop();
             }
 
+            if (sessionAnnouncements) {
+                sessionAnnouncements.stopCleanup();
+            }
+
             if (database) {
                 database.close();
             }

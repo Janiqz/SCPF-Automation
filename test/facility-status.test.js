@@ -1,6 +1,11 @@
 const assert = require('assert');
 const FacilityStateService = require('../src/services/FacilityStateService');
-const { summarizeSnapshot, buildMessage, formatAlarmName } = require('../src/services/FacilityStatusPublisher');
+const {
+    summarizeSnapshot,
+    buildMessage,
+    formatAlarmName,
+    buildConfiguredMention
+} = require('../src/services/FacilityStatusPublisher');
 const facilityCommand = require('../src/commands/facility');
 const SessionAnnouncementService = require('../src/services/SessionAnnouncementService');
 
@@ -80,6 +85,9 @@ function snapshot(overrides = {}) {
     assert.strictEqual(roleMention.content, '<@&123456789012345678>');
     assert.deepStrictEqual(roleMention.allowedMentions.roles, ['123456789012345678']);
     assert.strictEqual(sessionService.buildMention({ notifyMode: 'none' }).content, '');
+    const criticalAlert = sessionService.loadConfig().facilityAlerts.critical;
+    assert.strictEqual(buildConfiguredMention(criticalAlert).content, '');
+    assert.deepStrictEqual(buildConfiguredMention(criticalAlert).allowedMentions.parse, []);
 
     const subscriberRoleId = sessionService.loadConfig().subscriberRoleId;
     const roleChanges = [];
@@ -112,6 +120,7 @@ function snapshot(overrides = {}) {
     ]);
 
     let request;
+    let resetRequest;
     const service = new FacilityStateService({
         apiKey: 'not-a-real-key',
         universeId: '1234',
@@ -119,6 +128,10 @@ function snapshot(overrides = {}) {
             get: async (url, options) => {
                 request = { url, options };
                 return { data: { value: snapshot() } };
+            },
+            patch: async (url, data, options) => {
+                resetRequest = { url, data, options };
+                return { data: {} };
             }
         }
     });
@@ -126,6 +139,48 @@ function snapshot(overrides = {}) {
     assert.strictEqual(result.Revision, 12);
     assert(request.url.endsWith('/universes/1234/data-stores/FacilityState_v1/entries/canonical'));
     assert.strictEqual(request.options.headers['x-api-key'], 'not-a-real-key');
+    const resetCommand = await service.requestReset('owner');
+    assert.strictEqual(resetCommand.Action, 'reset');
+    assert(resetRequest.url.endsWith('/entries/control?allowMissing=true'));
+    assert.strictEqual(resetRequest.data.value.RequestedBy, 'owner');
+
+    let editedSession;
+    const endedActivity = {
+        active: true,
+        type: 'standard',
+        displayName: 'Facility Session',
+        reason: 'Test',
+        announcementChannelId: 'channel',
+        announcementMessageId: 'message'
+    };
+    const sessionConfig = {
+        guildId: 'guild',
+        facilityStatus: { enabled: true, channelId: 'channel', activity: endedActivity }
+    };
+    const lifecycleService = new SessionAnnouncementService({
+        channels: {
+            fetch: async () => ({
+                isTextBased: () => true,
+                messages: {
+                    fetch: async () => ({ edit: async payload => { editedSession = payload; } })
+                }
+            })
+        }
+    }, {
+        getServerConfig: () => sessionConfig,
+        getAllServerConfigs: () => [sessionConfig],
+        addOrUpdateServer: () => ({ success: true })
+    }, {
+        refreshGuild: async () => {}
+    }, {
+        configPath: require('path').join(__dirname, '../config/activity.json')
+    });
+    await lifecycleService.end({ guildId: 'guild', user: { id: 'owner' } });
+    assert.strictEqual(endedActivity.active, false);
+    assert(endedActivity.deleteAt - endedActivity.endedAt === 30 * 60);
+    assert.strictEqual(editedSession.embeds[0].toJSON().color, 0xffffff);
+    assert(editedSession.embeds[0].toJSON().image.url.includes('ThumbnailCoverAnnouncement.png'));
+    lifecycleService.stopCleanup();
 
     let unauthorizedReply;
     await facilityCommand.execute({

@@ -3,6 +3,7 @@
     {
       "guildId": "1145951510807720006",
       "guildName": "Main Foundation Server",
+      "announcementChannelId": null,
       "serverMemberDefaults": true,
       "robloxGroupId": 5458485,
       "nicknameFormat": "rank",
@@ -82,6 +83,7 @@
     {
       "guildId": "1482931140603023510",
       "guildName": "Mobile Task Force",
+      "announcementChannelId": null,
       "robloxGroupId": 5459069,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",
@@ -143,6 +145,7 @@
     {
       "guildId": "1482930888080756899",
       "guildName": "Security Department",
+      "announcementChannelId": null,
       "robloxGroupId": 5459441,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",
@@ -204,6 +207,7 @@
     {
       "guildId": "1482923600590803187",
       "guildName": "Ethics Committee",
+      "announcementChannelId": null,
       "robloxGroupId": 5460476,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",
@@ -265,6 +269,7 @@
     {
       "guildId": "1470868007352795292",
       "guildName": "Internal Investigation Agency",
+      "announcementChannelId": null,
       "robloxGroupId": 6459529,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",
@@ -306,6 +311,7 @@
     {
       "guildId": "1482213676625690724",
       "guildName": "Clinical Science Department",
+      "announcementChannelId": null,
       "robloxGroupId": 5464330,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",
@@ -371,6 +377,7 @@
     {
       "guildId": "1491946979683598487",
       "guildName": "Medical Department",
+      "announcementChannelId": null,
       "robloxGroupId": 6648925,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",
@@ -432,6 +439,7 @@
     {
       "guildId": "1491946727106805810",
       "guildName": "Department of External Affairs",
+      "announcementChannelId": null,
       "robloxGroupId": 5465286,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",
@@ -493,6 +501,7 @@
     {
       "guildId": "1491947315756273835",
       "guildName": "Engineering & Technical Department",
+      "announcementChannelId": null,
       "robloxGroupId": 6448879,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",
@@ -554,6 +563,7 @@
     {
       "guildId": "1491947597043204156",
       "guildName": "Logistics Department",
+      "announcementChannelId": null,
       "robloxGroupId": 8441931,
       "nicknameFormat": "custom",
       "customNicknamePrefix": "[TIMEZONE] ",

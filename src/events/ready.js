@@ -35,6 +35,7 @@ module.exports = {
 
         if (services.sessionAnnouncements) {
             services.sessionAnnouncements.startCleanup();
+            services.sessionAnnouncements.startSubscriberRoleSync();
         }
 
         if (services.quotaNotifications) {

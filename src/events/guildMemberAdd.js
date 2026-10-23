@@ -5,12 +5,16 @@ module.exports = {
 
     async execute(
         member,
-        { database, rankSyncService, configManager }
+        { database, rankSyncService, configManager, sessionAnnouncements }
     ) {
         try {
             if (member.user.bot) {
                 return;
             }
+
+            await sessionAnnouncements.ensureMemberSubscribed(member).catch(error => {
+                console.error(`[GuildMemberAdd] Could not enable session notifications for ${member.user.tag}: ${error.message}`);
+            });
 
             const serverConfig =
                 configManager.getServerConfig(

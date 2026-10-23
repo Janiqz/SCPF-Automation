@@ -14,8 +14,11 @@ class SessionAnnouncementService {
         this.configManager = configManager;
         this.facilityStatus = facilityStatus;
         this.configPath = options.configPath || path.join(__dirname, '../../config/activity.json');
+        this.database = options.database || null;
         this.deletionTimers = new Map();
         this.cleanupInterval = null;
+        this.subscriberSyncInterval = null;
+        this.subscriberSyncRunning = false;
     }
 
     loadConfig() {
@@ -68,13 +71,64 @@ class SessionAnnouncementService {
             throw new Error('Session notifications can only be changed inside the Discord server.');
         }
         const member = await interaction.guild.members.fetch(interaction.user.id);
-        const enabled = !member.roles.cache.has(roleId);
+        const currentlyEnabled = this.database
+            ? this.database.areSessionNotificationsEnabled(interaction.user.id, interaction.guild.id)
+            : member.roles.cache.has(roleId);
+        const enabled = !currentlyEnabled;
         if (enabled) {
             await member.roles.add(roleId, 'Member enabled Area 37 session notifications');
         } else {
             await member.roles.remove(roleId, 'Member disabled Area 37 session notifications');
         }
+        this.database?.setSessionNotificationsEnabled(interaction.user.id, interaction.guild.id, enabled);
         return enabled;
+    }
+
+    async ensureMemberSubscribed(member) {
+        if (!member || member.user?.bot || !this.database) return false;
+        const roleId = String(this.loadConfig().subscriberRoleId || '');
+        if (!/^\d{16,20}$/.test(roleId) || !member.guild.roles.cache.has(roleId)) return false;
+        if (!this.database.areSessionNotificationsEnabled(member.id, member.guild.id)) return false;
+        if (member.roles.cache.has(roleId)) return true;
+        await member.roles.add(roleId, 'Session notifications are enabled by default');
+        return true;
+    }
+
+    async syncSubscriberRoles() {
+        if (this.subscriberSyncRunning) return;
+        this.subscriberSyncRunning = true;
+        try {
+            const roleId = String(this.loadConfig().subscriberRoleId || '');
+            if (!/^\d{16,20}$/.test(roleId)) return;
+            for (const guild of this.client.guilds.cache.values()) {
+                const role = guild.roles.cache.get(roleId);
+                if (!role) continue;
+                const members = await guild.members.fetch();
+                let added = 0;
+                for (const member of members.values()) {
+                    if (member.user.bot || member.roles.cache.has(roleId)) continue;
+                    if (!this.database.areSessionNotificationsEnabled(member.id, guild.id)) continue;
+                    try {
+                        await member.roles.add(role, 'Session notifications are enabled by default');
+                        added += 1;
+                    } catch (error) {
+                        console.warn(`[Session Notifications] Could not enable notifications for ${member.id}: ${error.message}`);
+                    }
+                }
+                if (added) console.log(`[Session Notifications] Enabled for ${added} member(s) in ${guild.name}.`);
+            }
+        } finally {
+            this.subscriberSyncRunning = false;
+        }
+    }
+
+    startSubscriberRoleSync() {
+        if (!this.database || this.subscriberSyncInterval) return;
+        this.syncSubscriberRoles().catch(error => console.error('[Session Notifications] Initial role sync failed:', error.message));
+        this.subscriberSyncInterval = setInterval(() => {
+            this.syncSubscriberRoles().catch(error => console.error('[Session Notifications] Role sync failed:', error.message));
+        }, 10 * 60 * 1000);
+        this.subscriberSyncInterval.unref?.();
     }
 
     startCleanup() {
@@ -87,6 +141,8 @@ class SessionAnnouncementService {
     stopCleanup() {
         if (this.cleanupInterval) clearInterval(this.cleanupInterval);
         this.cleanupInterval = null;
+        if (this.subscriberSyncInterval) clearInterval(this.subscriberSyncInterval);
+        this.subscriberSyncInterval = null;
         for (const timer of this.deletionTimers.values()) clearTimeout(timer);
         this.deletionTimers.clear();
     }

@@ -111,6 +111,18 @@ class DatabaseManager {
             )
         `);
 
+        // Only explicit choices are stored. No row means notifications are
+        // enabled by default, so existing and new members are opted in.
+        this.db.run(`
+            CREATE TABLE IF NOT EXISTS session_notification_preferences (
+                discord_id TEXT NOT NULL,
+                guild_id TEXT NOT NULL,
+                enabled INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                PRIMARY KEY (discord_id, guild_id)
+            )
+        `);
+
         // ============================================================
         // Indexes
         // ============================================================
@@ -569,6 +581,31 @@ class DatabaseManager {
         stmt.free();
 
         return results;
+    }
+
+    // ============================================================
+    // Session notification preferences
+    // ============================================================
+
+    areSessionNotificationsEnabled(discordId, guildId) {
+        const stmt = this.db.prepare(`
+            SELECT enabled FROM session_notification_preferences
+            WHERE discord_id = ? AND guild_id = ?
+        `);
+        stmt.bind([discordId, guildId]);
+        const enabled = stmt.step() ? Number(stmt.getAsObject().enabled) === 1 : true;
+        stmt.free();
+        return enabled;
+    }
+
+    setSessionNotificationsEnabled(discordId, guildId, enabled) {
+        this.db.run(
+            `INSERT OR REPLACE INTO session_notification_preferences
+             (discord_id, guild_id, enabled, updated_at)
+             VALUES (?, ?, ?, ?)`,
+            [discordId, guildId, enabled ? 1 : 0, Date.now()]
+        );
+        this.save();
     }
 
     // ============================================================

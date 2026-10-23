@@ -513,7 +513,8 @@ const database =
         new SessionAnnouncementService(
             client,
             configManager,
-            facilityStatus
+            facilityStatus,
+            { database }
         );
 
     const quotaNotifications =

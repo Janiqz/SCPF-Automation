@@ -36,7 +36,7 @@
       "colour": 3447003,
       "defaultReason": "Foundation personnel are requested on-site.",
       "startTitle": "Area 37 Session Started",
-      "startDescription": "{reason}\n\nUse the live facility status to join the active site.",
+      "startDescription": "Use the live facility status to join the active site.",
       "endTitle": "Area 37 Session Ended",
       "endDescription": "The active Area 37 session has concluded.",
       "notifyMode": "role",

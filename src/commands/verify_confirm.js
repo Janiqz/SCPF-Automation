@@ -149,7 +149,8 @@ module.exports = {
             database,
             robloxService,
             rankSyncService,
-            configManager
+            configManager,
+            portalIdentities
         }
     ) {
         await interaction.deferReply({
@@ -171,6 +172,12 @@ module.exports = {
                         '❌ This server is not configured for rank syncing. Please contact an administrator.'
                 });
             }
+
+            const portalIdentity = await portalIdentities.find(interaction.user.id);
+            if (!portalIdentity) {
+                return interaction.editReply({ content: '❌ Link and verify your Roblox account first at https://janiqzscpf.info/account. Roblox profile codes are no longer used.' });
+            }
+            database.setVerification(interaction.user.id, portalIdentity.roblox_user_id, portalIdentity.roblox_username);
 
             // ========================================================
             // CHECK EXISTING VERIFICATION

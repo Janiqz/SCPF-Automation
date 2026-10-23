@@ -40,6 +40,10 @@ module.exports = {
         if (services.quotaNotifications) {
             services.quotaNotifications.start();
         }
+
+        if (services.portalIdentities) {
+            services.portalIdentities.start();
+        }
         
         console.log('\n✅ All systems operational!');
         console.log('═══════════════════════════════════════════════\n');

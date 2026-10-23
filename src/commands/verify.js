@@ -1,20 +1,12 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const crypto = require('crypto');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('verify')
-        .setDescription('Link your Roblox account to Discord')
-        .addStringOption(option =>
-            option.setName('username')
-                .setDescription('Your Roblox username')
-                .setRequired(true)
-        ),
+        .setDescription('Verify using the Roblox account linked to your Foundation portal'),
 
-    async execute(interaction, { database, robloxService, rankSyncService, configManager }) {
+    async execute(interaction, { database, rankSyncService, configManager, portalIdentities }) {
         await interaction.deferReply({ flags: 64 }); // 64 = ephemeral flag
-
-        const username = interaction.options.getString('username');
 
         try {
             // Check if server is configured
@@ -23,6 +15,13 @@ module.exports = {
                     content: '❌ This server is not configured for rank syncing. Please contact an administrator.'
                 });
             }
+
+            const identity = await portalIdentities.find(interaction.user.id);
+            if (!identity) return interaction.editReply({ content: '❌ Link and verify your Roblox account first at https://janiqzscpf.info/account, then run `/verify` again.' });
+            database.setVerification(interaction.user.id, identity.roblox_user_id, identity.roblox_username);
+            const sync = await rankSyncService.syncUserInGuild(interaction.client, interaction.guildId, interaction.user.id);
+            if (!sync.success) return interaction.editReply({ content: `❌ Your portal link was imported, but role sync failed: ${sync.error}` });
+            return interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x00ff00).setTitle('✅ Portal Verification Complete').setDescription(`Verified as **${identity.roblox_username}**. Your existing nickname and role sync has been applied.`).setTimestamp()] });
 
             // Check if user is already verified
             const existingVerification = database.getVerification(interaction.user.id);

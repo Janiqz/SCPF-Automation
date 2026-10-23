@@ -32,22 +32,30 @@ class PortalIdentityService {
 
     async refresh() {
         const identities = await this.fetchIdentities();
-        let changed = 0;
+        const changedIdentities = [];
         for (const identity of identities) {
             const existing = this.database.getVerification(identity.discord_id);
             if (!existing || String(existing.roblox_id) !== String(identity.roblox_user_id)
                 || existing.roblox_username !== identity.roblox_username) {
                 await this.importIdentity(identity);
-                changed += 1;
+                changedIdentities.push(identity);
             }
         }
-        if (!changed) return;
+        if (!changedIdentities.length) return;
+
         for (const config of this.configManager.getAllServerConfigs()) {
-            if (config.syncSettings?.backgroundSyncEnabled) {
-                await this.rankSyncService.syncAllInGuild(this.client, config.guildId);
+            for (const identity of changedIdentities) {
+                const result = await this.rankSyncService.syncUserInGuild(
+                    this.client,
+                    config.guildId,
+                    identity.discord_id
+                );
+                if (!result.success && result.error !== 'Member not found in guild') {
+                    console.warn(`[PortalIdentity] Could not sync ${identity.discord_id} in ${config.guildId}: ${result.error}`);
+                }
             }
         }
-        console.log(`[PortalIdentity] Imported ${changed} new or changed portal link(s).`);
+        console.log(`[PortalIdentity] Imported and synced ${changedIdentities.length} new or changed portal link(s).`);
     }
 
     start() {

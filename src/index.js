@@ -368,16 +368,37 @@ async function enforceAgeRoles(
 
 async function checkGuildAgeRoles(
     guild,
-    database
+    database,
+    options = {}
 ) {
     try {
         console.log(
             `[AgeRole] Checking members in ${guild.name}...`
         );
 
-        // Fetch members so that this also works for members
-        // who aren't currently cached.
-        await guild.members.fetch();
+        // Fetch the full member list only during the startup audit. Periodic
+        // opcode 8 requests are gateway-rate-limited by Discord.
+        if (options.fetchMembers === true) {
+            try {
+                await guild.members.fetch();
+            } catch (error) {
+                const retryAfter = Number(error?.data?.retry_after || 0);
+                console.warn(
+                    `[MemberCache] Full member fetch for ${guild.name} was rate limited; continuing with cached members.`
+                );
+                if (retryAfter > 0 && options.retryScheduled !== true) {
+                    const retry = setTimeout(() => {
+                        checkGuildAgeRoles(guild, database, {
+                            ...options,
+                            retryScheduled: true
+                        }).catch(retryError => console.warn(
+                            `[MemberCache] Deferred member fetch failed for ${guild.name}: ${retryError.message}`
+                        ));
+                    }, Math.ceil((retryAfter + 5) * 1000));
+                    retry.unref?.();
+                }
+            }
+        }
 
         let checked = 0;
 
@@ -394,6 +415,15 @@ async function checkGuildAgeRoles(
                 database,
                 'Automatic 18+ role audit'
             );
+
+            if (options.rankSyncService
+                && options.rankSyncService.isMainScpGuild(guild.id)
+                && !database.getVerification(member.id)) {
+                const guestResult = await options.rankSyncService.syncGuestInGuild(member);
+                if (!guestResult.success) {
+                    console.warn(`[GuestRole] Could not assign D Class Personnel to ${member.user.tag}: ${guestResult.error}`);
+                }
+            }
 
             checked++;
         }
@@ -415,7 +445,8 @@ async function checkGuildAgeRoles(
 // ============================================================
 
 async function checkAllGuildsAgeRoles(
-    database
+    database,
+    options = {}
 ) {
     console.log(
         '[AgeRole] Starting global 18+ role audit...'
@@ -426,7 +457,8 @@ async function checkAllGuildsAgeRoles(
     ) {
         await checkGuildAgeRoles(
             guild,
-            database
+            database,
+            options
         );
     }
 
@@ -695,7 +727,8 @@ const database =
             async () => {
                 try {
                     await checkAllGuildsAgeRoles(
-                        database
+                        database,
+                        { rankSyncService }
                     );
                 } catch (error) {
                     console.error(
@@ -810,7 +843,11 @@ const database =
             async () => {
                 try {
                     await checkAllGuildsAgeRoles(
-                        database
+                        database,
+                        {
+                            fetchMembers: true,
+                            rankSyncService
+                        }
                     );
                 } catch (error) {
                     console.error(

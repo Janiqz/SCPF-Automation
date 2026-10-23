@@ -27,11 +27,12 @@ class RankSyncService {
             process.env.MAIN_SCP_GUILD_ID || null;
 
         // ============================================================
-        // SERVER MEMBER / GUEST CONFIGURATION
+        // UNVERIFIED / GUEST CONFIGURATION
         // ============================================================
 
-        this.serverMemberRoleName = 'Server Member';
-        this.serverMemberNicknamePrefix = '[SM] ';
+        this.serverMemberRoleName = 'D Class Personnel';
+        this.serverMemberNicknamePrefix = '[CD] ';
+        this.legacyServerMemberRoleName = 'Server Member';
     }
 
     // ============================================================
@@ -252,6 +253,15 @@ class RankSyncService {
                         `[ServerMember] Granted "${this.serverMemberRoleName}" to ${member.user.tag} in ${member.guild.name}`
                     );
                 }
+            }
+
+            // Remove the old fallback role during migration so members do
+            // not retain both Server Member and D Class Personnel.
+            const legacyRole = this.findRole(member.guild, this.legacyServerMemberRoleName);
+            if (legacyRole && member.roles.cache.has(legacyRole.id)
+                && botMember.roles.highest.position > legacyRole.position) {
+                await member.roles.remove(legacyRole, 'Migrated to D Class Personnel fallback');
+                roleUpdated = true;
             }
 
             // ========================================================
@@ -680,10 +690,15 @@ class RankSyncService {
             // REMOVE SERVER MEMBER ROLE
             // ========================================================
 
-            await this.removeServerMemberRole(
-                member,
-                'User is now in the Roblox group with a valid rank'
-            );
+            // Rank 1 legitimately maps to D Class Personnel, so preserve it
+            // for those verified users. Other verified ranks should lose the
+            // unverified fallback role.
+            if (roleResult.role !== this.serverMemberRoleName) {
+                await this.removeServerMemberRole(
+                    member,
+                    'User is now in the Roblox group with a valid rank'
+                );
+            }
 
             // ========================================================
             // NORMAL / SPECIAL NICKNAME SYNC
@@ -941,9 +956,9 @@ class RankSyncService {
             const rolesToRemove =
                 member.roles.cache.filter(
                     role =>
-                        allConfiguredRoles.includes(
-                            role.name
-                        ) &&
+                        (allConfiguredRoles.includes(role.name)
+                            || (this.isMainScpGuild(member.guild.id)
+                                && role.name === this.legacyServerMemberRoleName)) &&
                         role.id !==
                             targetRole.id
                 );

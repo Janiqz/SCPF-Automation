@@ -33,8 +33,8 @@ module.exports = {
             // This MUST happen even when there is no verification
             // record.
             //
-            // syncGuestInGuild() handles the Server Member role and
-            // [SM] nickname specifically for the main Foundation server.
+            // syncGuestInGuild() handles the D Class Personnel role and
+            // [CD] nickname specifically for the main Foundation server.
             //
 
             const verification =
@@ -44,7 +44,7 @@ module.exports = {
 
             if (!verification) {
                 console.log(
-                    `[GuildMemberAdd] ${member.user.tag} is unverified in ${member.guild.name} - assigning Server Member`
+                    `[GuildMemberAdd] ${member.user.tag} is unverified in ${member.guild.name} - assigning D Class Personnel`
                 );
 
                 const result =
@@ -54,11 +54,11 @@ module.exports = {
 
                 if (result.success) {
                     console.log(
-                        `[GuildMemberAdd] Assigned Server Member status to ${member.user.tag}`
+                        `[GuildMemberAdd] Assigned D Class Personnel status to ${member.user.tag}`
                     );
                 } else {
                     console.error(
-                        `[GuildMemberAdd] Failed to assign Server Member status to ${member.user.tag}: ${result.error}`
+                        `[GuildMemberAdd] Failed to assign D Class Personnel status to ${member.user.tag}: ${result.error}`
                     );
                 }
 

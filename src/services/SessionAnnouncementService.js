@@ -103,7 +103,10 @@ class SessionAnnouncementService {
             for (const guild of this.client.guilds.cache.values()) {
                 const role = guild.roles.cache.get(roleId);
                 if (!role) continue;
-                const members = await guild.members.fetch();
+                // Use the gateway cache. A separate startup audit performs
+                // the one full member fetch; repeating opcode 8 requests here
+                // causes Discord gateway rate limits.
+                const members = guild.members.cache;
                 let added = 0;
                 for (const member of members.values()) {
                     if (member.user.bot || member.roles.cache.has(roleId)) continue;

@@ -51,6 +51,7 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
     const cafeteria = components.Cafeteria || {};
     const alarms = components.Alarms || {};
     const elevators = components.Elevators || {};
+    const scanners = components.Scanners || {};
     const paidRiot = components.PaidRiot || {};
     const scps = getScpSummary(components);
     const updatedAt = numeric(snapshot.UpdatedAt);
@@ -64,6 +65,8 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
     const brokenElevators = numeric(elevators.BrokenCount);
     const disabledElevators = numeric(elevators.DisabledCount);
     const totalElevators = numeric(elevators.TotalElevators);
+    const brokenScanners = numeric(scanners.BrokenCount);
+    const totalScanners = numeric(scanners.TotalScanners || scanners.TotalCount);
     const thresholds = activityConfig.facilityHealth || {};
     const lightsDegradedAt = Math.max(1, numeric(thresholds.brokenLightsDegraded, 40));
     const elevatorsDegradedAt = Math.max(1, numeric(thresholds.brokenElevatorsDegraded, 1));
@@ -93,6 +96,8 @@ function summarizeSnapshot(snapshot, nowSeconds = Math.floor(Date.now() / 1000),
         brokenElevators,
         disabledElevators,
         totalElevators,
+        brokenScanners,
+        totalScanners,
         paidRiot: {
             active: paidRiot.Active === true,
             startedAt: numeric(paidRiot.StartedAt),
@@ -141,6 +146,7 @@ function buildMessage(snapshot, nowSeconds, activity) {
             { name: 'Lighting', value: `${summary.brokenLights}${summary.totalLights ? ` / ${summary.totalLights}` : ''} broken`, inline: true },
             { name: 'Cafeteria', value: summary.capacity ? `${summary.stock} / ${summary.capacity} stocked` : 'No stock data', inline: true },
             { name: 'Elevators', value: `${summary.brokenElevators} broken • ${summary.disabledElevators} disabled • ${summary.totalElevators} tracked`, inline: true },
+            { name: 'Scanners', value: `${summary.brokenScanners}${summary.totalScanners ? ` / ${summary.totalScanners}` : ''} broken`, inline: true },
             { name: 'Last update', value: updatedText, inline: false }
         )
         .setFooter({ text: 'Area 37 Facility Status • updates automatically' })

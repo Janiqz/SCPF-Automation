@@ -23,6 +23,7 @@ function snapshot(overrides = {}) {
             Cafeteria: { TotalStock: 24, TotalCapacity: 30 },
             Alarms: { ActivePanelId: null },
             Elevators: { BrokenCount: 0, DisabledCount: 0, TotalElevators: 12 },
+            Scanners: { BrokenCount: 0, TotalScanners: 3 },
             'SCP:SCP-173': { Status: 'contained' }
         },
         ...overrides
@@ -97,6 +98,8 @@ function snapshot(overrides = {}) {
 
     assert.strictEqual(summarizeSnapshot(snapshot(), 1_500).level, 'stable');
     const payload = buildMessage(snapshot(), 1_030);
+    const scannerField = payload.embeds[0].toJSON().fields.find(field => field.name === 'Scanners');
+    assert.strictEqual(scannerField.value, '0 / 3 broken');
     assert.strictEqual(payload.components.length, 1);
     assert(payload.components[0].toJSON().components[0].url.includes('gameInstanceId=job-id'));
     assert(payload.components[0].toJSON().components.some(component =>

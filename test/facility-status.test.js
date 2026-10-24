@@ -1,5 +1,6 @@
 const assert = require('assert');
 const FacilityStateService = require('../src/services/FacilityStateService');
+const FacilityStatusPublisher = require('../src/services/FacilityStatusPublisher');
 const {
     summarizeSnapshot,
     buildMessage,
@@ -49,6 +50,42 @@ function snapshot(overrides = {}) {
     assert.strictEqual(summarizeSnapshot(disabledElevatorData, 1_030).level, 'stable');
     assert.strictEqual(formatAlarmName('BreachAlarmPanel'), 'Breach Alarm');
     assert.strictEqual(formatAlarmName('CodeYellowAlarmPanel'), 'Code Yellow Alarm');
+
+    const persistedConfig = { guildId: 'guild', facilityStatus: { enabled: false } };
+    let statusEdits = 0;
+    let statusSends = 0;
+    const persistedRecord = {
+        guild_id: 'guild',
+        channel_id: 'saved-channel',
+        message_id: 'saved-message',
+        enabled: 1
+    };
+    const persistentPublisher = new FacilityStatusPublisher({
+        user: { id: 'bot' },
+        channels: { fetch: async () => ({
+            isTextBased: () => true,
+            messages: { fetch: async messageId => {
+                assert.strictEqual(messageId, 'saved-message');
+                return { id: messageId, edit: async () => { statusEdits += 1; } };
+            } },
+            send: async () => { statusSends += 1; throw new Error('A restored feed must not be reposted.'); }
+        }) }
+    }, {}, {
+        getAllServerConfigs: () => [persistedConfig],
+        addOrUpdateServer: () => ({ success: true })
+    }, {
+        getFacilityStatusMessage: () => persistedRecord,
+        setFacilityStatusMessage: () => { throw new Error('Unchanged message data should not be rewritten.'); }
+    });
+    persistentPublisher.restorePersistentSettings();
+    assert.deepStrictEqual(persistedConfig.facilityStatus, {
+        enabled: true,
+        channelId: 'saved-channel',
+        messageId: 'saved-message'
+    });
+    await persistentPublisher.publish(persistedConfig, snapshot());
+    assert.strictEqual(statusEdits, 1);
+    assert.strictEqual(statusSends, 0);
 
     const emergencyData = snapshot();
     emergencyData.Components = { ...emergencyData.Components, Alarms: { ActivePanelId: 'BreachAlarm' } };

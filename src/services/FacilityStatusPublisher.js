@@ -187,23 +187,80 @@ function buildMessage(snapshot, nowSeconds, activity) {
 }
 
 class FacilityStatusPublisher {
-    constructor(client, stateService, configManager, options = {}) {
+    constructor(client, stateService, configManager, database, options = {}) {
         this.client = client;
         this.stateService = stateService;
         this.configManager = configManager;
+        this.database = database;
         this.interval = null;
         this.refreshMs = Math.max(15000, numeric(options.refreshMs || process.env.FACILITY_STATUS_REFRESH_SECONDS, 30) * (options.refreshMs ? 1 : 1000));
         this.observedLevels = new Map();
         this.refreshInProgress = false;
         this.lastSnapshot = null;
+        this.persistenceRestored = false;
+        this.existingFeedsRecovered = false;
     }
 
     start() {
         if (this.interval) return;
+        this.restorePersistentSettings();
         this.refreshAll().catch(error => console.error('[FacilityStatus] Initial refresh failed:', error.message));
         this.interval = setInterval(() => {
             this.refreshAll().catch(error => console.error('[FacilityStatus] Refresh failed:', error.message));
         }, this.refreshMs);
+    }
+
+    restorePersistentSettings() {
+        if (this.persistenceRestored || !this.database) return;
+        this.persistenceRestored = true;
+        for (const config of this.configManager.getAllServerConfigs()) {
+            const saved = this.database.getFacilityStatusMessage(config.guildId);
+            if (!saved) continue;
+            config.facilityStatus = {
+                ...(config.facilityStatus || {}),
+                enabled: Number(saved.enabled) === 1,
+                channelId: String(saved.channel_id),
+                messageId: String(saved.message_id)
+            };
+        }
+    }
+
+    persistMessage(config, enabled = true) {
+        if (!this.database || !config.facilityStatus) return;
+        const settings = config.facilityStatus;
+        if (!settings.channelId || !settings.messageId) return;
+        const saved = this.database.getFacilityStatusMessage(config.guildId);
+        if (saved
+            && String(saved.channel_id) === String(settings.channelId)
+            && String(saved.message_id) === String(settings.messageId)
+            && Number(saved.enabled) === (enabled ? 1 : 0)) return;
+        this.database.setFacilityStatusMessage(
+            config.guildId,
+            String(settings.channelId),
+            String(settings.messageId),
+            enabled
+        );
+    }
+
+    async recoverExistingFeeds() {
+        if (this.existingFeedsRecovered || !this.database) return;
+        this.existingFeedsRecovered = true;
+        for (const config of this.configManager.getAllServerConfigs()) {
+            const settings = config.facilityStatus;
+            if (!settings || !settings.channelId || this.database.getFacilityStatusMessage(config.guildId)) continue;
+            try {
+                const channel = await this.client.channels.fetch(settings.channelId);
+                if (!channel || !channel.isTextBased()) continue;
+                const message = await this.findStatusMessage(channel, settings.messageId);
+                if (!message) continue;
+                settings.enabled = true;
+                settings.messageId = message.id;
+                this.persistMessage(config, true);
+                console.log(`[FacilityStatus] Restored existing feed message for guild ${config.guildId}.`);
+            } catch (error) {
+                console.warn(`[FacilityStatus] Existing feed recovery failed for ${config.guildId}:`, error.message);
+            }
+        }
     }
 
     stop() {
@@ -215,6 +272,7 @@ class FacilityStatusPublisher {
         if (this.refreshInProgress) return;
         this.refreshInProgress = true;
         try {
+            await this.recoverExistingFeeds();
             const configs = this.configManager.getAllServerConfigs()
                 .filter(config => config.facilityStatus && config.facilityStatus.enabled);
             if (!configs.length || !this.stateService.isConfigured()) return;
@@ -279,6 +337,7 @@ class FacilityStatusPublisher {
             settings.messageId = message.id;
             this.configManager.addOrUpdateServer(config);
         }
+        this.persistMessage(config, true);
 
         const previousLevel = this.observedLevels.get(config.guildId);
         this.observedLevels.set(config.guildId, payload.summary.level);
@@ -344,6 +403,7 @@ class FacilityStatusPublisher {
             await sent.delete().catch(() => {});
             throw new Error(`Could not save facility configuration: ${result.error}`);
         }
+        this.persistMessage(config, true);
         if (previousSettings && previousSettings.channelId
             && previousSettings.channelId !== channel.id) {
             try {
@@ -394,6 +454,7 @@ class FacilityStatusPublisher {
         settings.enabled = false;
         const result = this.configManager.addOrUpdateServer(config);
         if (!result.success) throw new Error(`Could not save facility configuration: ${result.error}`);
+        this.persistMessage(config, false);
         this.observedLevels.delete(guildId);
     }
 }

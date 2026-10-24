@@ -180,6 +180,18 @@ class DatabaseManager {
             )
         `);
 
+        // The facility feed location must survive process restarts and source
+        // deployments without relying on an in-memory Discord message object.
+        this.db.run(`
+            CREATE TABLE IF NOT EXISTS facility_status_messages (
+                guild_id TEXT PRIMARY KEY,
+                channel_id TEXT NOT NULL,
+                message_id TEXT NOT NULL,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                updated_at INTEGER NOT NULL
+            )
+        `);
+
         // Durable record of portal application publishing jobs. This makes
         // Discord posting idempotent across retries and bot restarts.
         this.db.run(`
@@ -627,6 +639,24 @@ class DatabaseManager {
         const result = stmt.step() ? stmt.getAsObject() : null;
         stmt.free();
         return result;
+    }
+
+    getFacilityStatusMessage(guildId) {
+        const stmt = this.db.prepare('SELECT * FROM facility_status_messages WHERE guild_id = ?');
+        stmt.bind([guildId]);
+        const result = stmt.step() ? stmt.getAsObject() : null;
+        stmt.free();
+        return result;
+    }
+
+    setFacilityStatusMessage(guildId, channelId, messageId, enabled = true) {
+        this.db.run(
+            `INSERT OR REPLACE INTO facility_status_messages
+             (guild_id, channel_id, message_id, enabled, updated_at)
+             VALUES (?, ?, ?, ?, ?)`,
+            [guildId, channelId, messageId, enabled ? 1 : 0, Date.now()]
+        );
+        this.save();
     }
 
     getLatestPortalApplicationDispatch(applicationId) {

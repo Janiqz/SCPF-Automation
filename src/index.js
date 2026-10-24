@@ -539,7 +539,8 @@ const database =
         new FacilityStatusPublisher(
             client,
             facilityState,
-            configManager
+            configManager,
+            database
         );
 
     const sessionAnnouncements =

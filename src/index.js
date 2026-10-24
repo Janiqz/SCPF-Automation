@@ -26,6 +26,7 @@ const FacilityStatusPublisher = require('./services/FacilityStatusPublisher');
 const SessionAnnouncementService = require('./services/SessionAnnouncementService');
 const QuotaNotificationService = require('./services/QuotaNotificationService');
 const PortalIdentityService = require('./services/PortalIdentityService');
+const ApplicationPublishingService = require('./services/ApplicationPublishingService');
 
 // ============================================================
 // AGE ROLE CONFIGURATION
@@ -552,6 +553,12 @@ const database =
     const quotaNotifications =
         new QuotaNotificationService(client);
 
+    const applicationPublishing = new ApplicationPublishingService(
+        client,
+        database,
+        configManager
+    );
+
     const portalIdentities = new PortalIdentityService(
         database,
         client,
@@ -575,7 +582,8 @@ const database =
         facilityStatus,
         sessionAnnouncements,
         quotaNotifications,
-        portalIdentities
+        portalIdentities,
+        applicationPublishing
     };
 
     // ========================================================
@@ -793,6 +801,9 @@ const database =
 
             if (quotaNotifications) {
                 quotaNotifications.stop();
+            }
+            if (applicationPublishing) {
+                applicationPublishing.stop();
             }
             if (portalIdentities) {
                 portalIdentities.stop();

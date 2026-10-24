@@ -42,6 +42,10 @@ module.exports = {
             services.quotaNotifications.start();
         }
 
+        if (services.applicationPublishing) {
+            services.applicationPublishing.start();
+        }
+
         if (services.portalIdentities) {
             services.portalIdentities.start();
         }

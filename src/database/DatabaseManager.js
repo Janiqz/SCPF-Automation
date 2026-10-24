@@ -180,6 +180,19 @@ class DatabaseManager {
             )
         `);
 
+        // Durable record of portal application publishing jobs. This makes
+        // Discord posting idempotent across retries and bot restarts.
+        this.db.run(`
+            CREATE TABLE IF NOT EXISTS portal_application_dispatches (
+                job_id TEXT PRIMARY KEY,
+                application_id TEXT NOT NULL,
+                guild_id TEXT NOT NULL,
+                channel_id TEXT NOT NULL,
+                message_id TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )
+        `);
+
         // ============================================================
         // Application indexes
         // ============================================================
@@ -604,6 +617,36 @@ class DatabaseManager {
              (discord_id, guild_id, enabled, updated_at)
              VALUES (?, ?, ?, ?)`,
             [discordId, guildId, enabled ? 1 : 0, Date.now()]
+        );
+        this.save();
+    }
+
+    getPortalApplicationDispatch(jobId) {
+        const stmt = this.db.prepare('SELECT * FROM portal_application_dispatches WHERE job_id = ?');
+        stmt.bind([jobId]);
+        const result = stmt.step() ? stmt.getAsObject() : null;
+        stmt.free();
+        return result;
+    }
+
+    getLatestPortalApplicationDispatch(applicationId) {
+        const stmt = this.db.prepare(`
+            SELECT * FROM portal_application_dispatches
+            WHERE application_id = ? AND guild_id != 'dm'
+            ORDER BY created_at DESC LIMIT 1
+        `);
+        stmt.bind([applicationId]);
+        const result = stmt.step() ? stmt.getAsObject() : null;
+        stmt.free();
+        return result;
+    }
+
+    setPortalApplicationDispatch(jobId, applicationId, guildId, channelId, messageId) {
+        this.db.run(
+            `INSERT OR REPLACE INTO portal_application_dispatches
+             (job_id, application_id, guild_id, channel_id, message_id, created_at)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [jobId, applicationId, guildId, channelId, messageId, Date.now()]
         );
         this.save();
     }

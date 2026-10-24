@@ -6,10 +6,11 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "npm run test:facility && npm run test:quota && npm run test:announcement",
+    "test": "npm run test:facility && npm run test:quota && npm run test:announcement && npm run test:applications",
     "test:facility": "node test/facility-status.test.js",
     "test:quota": "node test/quota-notifications.test.js",
-    "test:announcement": "node test/global-announce.test.js"
+    "test:announcement": "node test/global-announce.test.js",
+    "test:applications": "node test/application-publishing.test.js"
   },
   "keywords": [
     "discord",

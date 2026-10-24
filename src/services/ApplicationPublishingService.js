@@ -38,7 +38,7 @@ class ApplicationPublishingService {
             .setTitle(application.title)
             .setDescription(application.description || 'A new departmental application is available.')
             .addFields(
-                { name: 'Department', value: `${application.departmentShortName} — ${application.departmentName}`, inline: true },
+                { name: 'Department', value: `${application.departmentShortName} - ${application.departmentName}`, inline: true },
                 { name: 'Status', value: closed ? '🔴 Closed' : '🟢 Open', inline: true },
                 { name: 'Questions', value: String(application.questionCount || 0), inline: true },
                 { name: 'Eligible ranks', value: rankText, inline: false }
@@ -87,7 +87,7 @@ class ApplicationPublishingService {
                 .setTitle(accepted ? 'Application accepted' : 'Application denied')
                 .setDescription(`Your **${application.title}** application has been reviewed.`)
                 .addFields(
-                    { name: 'Department', value: `${application.departmentShortName} — ${application.departmentName}` },
+                    { name: 'Department', value: `${application.departmentShortName} - ${application.departmentName}` },
                     { name: 'Result', value: accepted ? 'Accepted' : 'Denied', inline: true },
                     { name: 'Reason', value: String(result.reason || 'No additional reason was provided.').slice(0, 1024) }
                 )

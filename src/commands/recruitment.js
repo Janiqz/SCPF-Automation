@@ -24,7 +24,7 @@ const RECRUITMENT_CHANNEL_ID = '1502347677734535280';
 // Roles allowed to run this command (case-insensitive).
 const ALLOWED_RANKS = ['o5 council', 'executive personnel', 'o5 head', 'the administrator'];
 
-// Only location option available right now — add more here later.
+// Only location option available right now - add more here later.
 const LOCATION_CHOICES = [
     { name: 'Area 37 Session', value: 'Area 37 Session' }
 ];
@@ -191,7 +191,7 @@ module.exports = {
         // ----------------------------------------------------
         const modal = new ModalBuilder()
             .setCustomId(`recruit_modal_${interaction.id}`)
-            .setTitle(`${style.label} — Details`);
+            .setTitle(`${style.label} - Details`);
 
         const requirementsInput = new TextInputBuilder()
             .setCustomId('requirements')
@@ -223,7 +223,7 @@ module.exports = {
                 time: 10 * 60 * 1000 // 10 minutes to fill it out
             });
         } catch {
-            // Modal timed out or was dismissed — nothing left to do.
+            // Modal timed out or was dismissed - nothing left to do.
             return;
         }
 
@@ -235,7 +235,7 @@ module.exports = {
 
         // ----------------------------------------------------
         // State for this recruitment session (lives in memory
-        // for the process's lifetime — resets on bot restart)
+        // for the process's lifetime - resets on bot restart)
         // ----------------------------------------------------
         let status = 'SCHEDULED';
         let currentTime = time;
@@ -291,7 +291,7 @@ module.exports = {
             });
         }
 
-        // Applications aren't "sessions" — no start/delay/cancel/end controls needed.
+        // Applications aren't "sessions" - no start/delay/cancel/end controls needed.
         if (type === 'application') {
             await modalSubmission.editReply({
                 content: `✅ ${style.label} embed posted to ${channel}!`
@@ -305,7 +305,7 @@ module.exports = {
                         if (logChannel) {
                             const logEmbed = new EmbedBuilder()
                                 .setColor(style.color)
-                                .setTitle(`Recruitment Post Created — ${style.label}`)
+                                .setTitle(`Recruitment Post Created - ${style.label}`)
                                 .addFields(
                                     { name: 'Created By', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
                                     { name: 'Channel', value: `${channel}`, inline: true },
@@ -369,13 +369,13 @@ module.exports = {
                 components: [schedulingRow()]
             });
         } catch {
-            // DMs closed — the post still went out, just note it below.
+            // DMs closed - the post still went out, just note it below.
         }
 
         await modalSubmission.editReply({
             content: dmMessage
                 ? `✅ ${style.label} embed posted to ${channel}! Check your DMs for controls to start, delay, cancel, or end the session.`
-                : `✅ ${style.label} embed posted to ${channel}! I couldn't DM you a control panel — please enable DMs from server members if you want to manage this session.`
+                : `✅ ${style.label} embed posted to ${channel}! I couldn't DM you a control panel - please enable DMs from server members if you want to manage this session.`
         });
 
         if (!dmMessage) {
@@ -449,7 +449,7 @@ module.exports = {
                         dmMessage.edit({ embeds: [controlEmbed()], components: [schedulingRow()] })
                     ]);
 
-                    // Session is still schedulable after a delay — restore that state
+                    // Session is still schedulable after a delay - restore that state
                     // once the "delayed" flag has been visually communicated.
                     status = 'SCHEDULED';
                     return;
@@ -497,12 +497,12 @@ module.exports = {
                 return;
             }
 
-            // Timed out without a final action — freeze the controls so they
+            // Timed out without a final action - freeze the controls so they
             // can't be clicked into an inconsistent state.
             try {
                 await dmMessage.edit({ embeds: [controlEmbed()], components: [endedRow()] });
             } catch {
-                // DM may have been deleted — nothing more to do.
+                // DM may have been deleted - nothing more to do.
             }
         });
 
@@ -517,7 +517,7 @@ module.exports = {
                     if (logChannel) {
                         const logEmbed = new EmbedBuilder()
                             .setColor(style.color)
-                            .setTitle(`Recruitment Post Created — ${style.label}`)
+                            .setTitle(`Recruitment Post Created - ${style.label}`)
                             .addFields(
                                 { name: 'Created By', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
                                 { name: 'Channel', value: `${channel}`, inline: true },

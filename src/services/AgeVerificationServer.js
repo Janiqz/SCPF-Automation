@@ -1,4 +1,5 @@
 const http = require('http');
+const { timingSafeEqual } = require('crypto');
 const { EmbedBuilder } = require('discord.js');
 
 const WEBHOOK_SECRET = process.env.AGE_WEBHOOK_SECRET;
@@ -7,6 +8,15 @@ const AGE_VERIFIED_ROLE_NAME = '18+ Verified';
 const UNVERIFIED_ROLE_NAME = '18+ Unverified';
 
 const PORT = Number(process.env.AGE_WEBHOOK_PORT) || 26111;
+const MAX_WEBHOOK_BYTES = 16 * 1024;
+
+function secretMatches(supplied, expected) {
+    if (typeof supplied !== 'string' || typeof expected !== 'string') return false;
+    const suppliedBuffer = Buffer.from(supplied);
+    const expectedBuffer = Buffer.from(expected);
+    return suppliedBuffer.length === expectedBuffer.length
+        && timingSafeEqual(suppliedBuffer, expectedBuffer);
+}
 
 class AgeVerificationServer {
     constructor(client, database) {
@@ -53,12 +63,21 @@ class AgeVerificationServer {
             }
 
             let body = '';
+            let bodyBytes = 0;
 
             req.on('data', chunk => {
+                bodyBytes += chunk.length;
+                if (bodyBytes > MAX_WEBHOOK_BYTES) {
+                    res.writeHead(413);
+                    res.end('Payload too large');
+                    req.destroy();
+                    return;
+                }
                 body += chunk.toString();
             });
 
             req.on('end', () => {
+                if (bodyBytes > MAX_WEBHOOK_BYTES) return;
                 this._handleRequest(req, res, body);
             });
         });
@@ -620,10 +639,7 @@ class AgeVerificationServer {
             // Check webhook secret
             // --------------------------------------------------------
 
-            if (
-                payload.secret !==
-                WEBHOOK_SECRET
-            ) {
+            if (!secretMatches(payload.secret, WEBHOOK_SECRET)) {
                 console.warn(
                     '[AgeVerification] Invalid webhook secret from',
                     req.socket.remoteAddress
@@ -644,8 +660,9 @@ class AgeVerificationServer {
             } = payload;
 
             if (
-                !robloxUserId ||
-                !robloxUsername
+                !/^\d{1,20}$/.test(String(robloxUserId || '')) ||
+                typeof robloxUsername !== 'string' ||
+                !/^[A-Za-z0-9_]{3,20}$/.test(robloxUsername)
             ) {
                 res.writeHead(400);
                 res.end('Missing fields');

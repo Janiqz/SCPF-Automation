@@ -3,7 +3,10 @@
   "sessionEmbed": {
     "colour": 16777215,
     "imageFile": "assets/ThumbnailCoverAnnouncement.png",
-    "deleteAfterMinutes": 30
+    "deleteAfterMinutes": 30,
+    "reminderAfterMinutes": 120,
+    "reminderTitle": "Is your Area 37 session still running?",
+    "reminderDescription": "Your session has been active for two hours. If it has finished, return to the server and run `/session end`."
   },
   "facilityHealth": {
     "brokenLightsDegraded": 40,
@@ -24,6 +27,8 @@
     "notifyRoleId": "1562905845308592239"
   },
   "authorizedRoleNames": [
+    "Executive Personnel",
+    "Site Director",
     "O5 Council",
     "Developer",
     "O5 Head",

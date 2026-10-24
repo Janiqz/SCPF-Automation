@@ -128,6 +128,16 @@ function snapshot(overrides = {}) {
     assert.strictEqual(sessionService.isAuthorized({
         guild: { ownerId: 'owner' },
         user: { id: 'member' },
+        member: { roles: { cache: [{ name: 'Executive Personnel' }] } }
+    }), true);
+    assert.strictEqual(sessionService.isAuthorized({
+        guild: { ownerId: 'owner' },
+        user: { id: 'member' },
+        member: { roles: { cache: [{ name: 'Site Director' }] } }
+    }), true);
+    assert.strictEqual(sessionService.isAuthorized({
+        guild: { ownerId: 'owner' },
+        user: { id: 'member' },
         member: { roles: { cache: [{ name: 'Foundation Personnel' }] } }
     }), false);
     const paidRiotMention = sessionService.buildMention(sessionService.loadConfig().paidRiotAlert);
@@ -234,6 +244,33 @@ function snapshot(overrides = {}) {
     assert.strictEqual(editedSession.embeds[0].toJSON().image.url, 'attachment://ThumbnailCoverAnnouncement.png');
     assert.strictEqual(editedSession.files[0].name, 'ThumbnailCoverAnnouncement.png');
     lifecycleService.stopCleanup();
+
+    const reminderNow = Math.floor(Date.now() / 1000);
+    const reminderActivity = {
+        active: true,
+        displayName: 'Facility Session',
+        reason: 'Activity test',
+        startedAt: reminderNow - (2 * 60 * 60),
+        startedBy: 'starter',
+        reminderAt: reminderNow - 1
+    };
+    const reminderConfig = {
+        guildId: 'guild',
+        facilityStatus: { enabled: true, channelId: 'channel', activity: reminderActivity }
+    };
+    let reminderDm = null;
+    const reminderService = new SessionAnnouncementService({
+        users: { fetch: async () => ({ send: async payload => { reminderDm = payload; } }) }
+    }, {
+        getServerConfig: () => reminderConfig,
+        addOrUpdateServer: () => ({ success: true })
+    }, {}, {
+        configPath: require('path').join(__dirname, '../config/activity.json')
+    });
+    assert.strictEqual(await reminderService.sendSessionReminder('guild'), true);
+    assert(reminderDm.embeds[0].toJSON().description.includes('/session end'));
+    assert(reminderActivity.reminderSentAt);
+    assert.strictEqual(await reminderService.sendSessionReminder('guild'), false);
 
     let unauthorizedReply;
     await facilityCommand.execute({

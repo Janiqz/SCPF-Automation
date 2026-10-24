@@ -16,6 +16,7 @@ class SessionAnnouncementService {
         this.configPath = options.configPath || path.join(__dirname, '../../config/activity.json');
         this.database = options.database || null;
         this.deletionTimers = new Map();
+        this.reminderTimers = new Map();
         this.cleanupInterval = null;
         this.subscriberSyncInterval = null;
         this.subscriberSyncRunning = false;
@@ -148,16 +149,78 @@ class SessionAnnouncementService {
         this.subscriberSyncInterval = null;
         for (const timer of this.deletionTimers.values()) clearTimeout(timer);
         this.deletionTimers.clear();
+        for (const timer of this.reminderTimers.values()) clearTimeout(timer);
+        this.reminderTimers.clear();
     }
 
     restoreDeletionTimers() {
+        const reminderMinutes = Math.max(1, Number(this.loadConfig().sessionEmbed?.reminderAfterMinutes) || 120);
         for (const serverConfig of this.configManager.getAllServerConfigs()) {
             const activity = serverConfig.facilityStatus && serverConfig.facilityStatus.activity;
             if (activity && activity.active === false && activity.deleteAt
                 && activity.announcementChannelId && activity.announcementMessageId) {
                 this.scheduleDeletion(serverConfig.guildId, activity);
             }
+            if (activity && activity.active === true && activity.startedAt
+                && !activity.reminderSentAt) {
+                if (!activity.reminderAt) {
+                    activity.reminderAt = Number(activity.startedAt) + Math.round(reminderMinutes * 60);
+                    this.configManager.addOrUpdateServer(serverConfig);
+                }
+                this.scheduleReminder(serverConfig.guildId, activity);
+            }
         }
+    }
+
+    scheduleReminder(guildId, activity) {
+        if (!activity.startedBy || !activity.reminderAt || activity.reminderSentAt) return;
+        const existing = this.reminderTimers.get(guildId);
+        if (existing) clearTimeout(existing);
+        const delay = Math.max(0, Number(activity.reminderAt) * 1000 - Date.now());
+        const timer = setTimeout(() => {
+            this.reminderTimers.delete(guildId);
+            this.sendSessionReminder(guildId).catch(error => {
+                console.warn('[Session] Could not send the two-hour reminder:', error.message);
+            });
+        }, Math.min(delay, 2_147_000_000));
+        timer.unref?.();
+        this.reminderTimers.set(guildId, timer);
+    }
+
+    async sendSessionReminder(guildId) {
+        const serverConfig = this.configManager.getServerConfig(guildId);
+        const settings = serverConfig && serverConfig.facilityStatus;
+        const activity = settings && settings.activity;
+        if (!activity || activity.active !== true || activity.reminderSentAt
+            || !activity.reminderAt || Number(activity.reminderAt) * 1000 > Date.now()) return false;
+
+        activity.reminderSentAt = Math.floor(Date.now() / 1000);
+        const result = this.configManager.addOrUpdateServer(serverConfig);
+        if (!result.success) throw new Error(`Could not save reminder state: ${result.error}`);
+
+        const config = this.loadConfig();
+        const embedConfig = config.sessionEmbed || {};
+        const user = await this.client.users.fetch(activity.startedBy);
+        const embed = new EmbedBuilder()
+            .setColor(Number(embedConfig.colour) || 0xffffff)
+            .setTitle(String(embedConfig.reminderTitle || 'Is your Area 37 session still running?'))
+            .setDescription(String(embedConfig.reminderDescription
+                || 'Your session has been active for two hours. If it has finished, return to the server and run `/session end`.'))
+            .addFields(
+                { name: 'Session', value: String(activity.displayName || 'Facility Session'), inline: true },
+                { name: 'Started', value: `<t:${activity.startedAt}:R>`, inline: true },
+                { name: 'Reason', value: String(activity.reason || 'No reason provided.').slice(0, 1024) }
+            )
+            .setTimestamp();
+        const components = [];
+        const statusUrl = this.getStatusUrl(guildId, settings);
+        if (statusUrl) {
+            components.push(new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setLabel('View Live Facility Status').setStyle(ButtonStyle.Link).setURL(statusUrl)
+            ));
+        }
+        await user.send({ embeds: [embed], components });
+        return true;
     }
 
     scheduleDeletion(guildId, activity) {
@@ -229,6 +292,7 @@ class SessionAnnouncementService {
             ? suppliedReason.trim().slice(0, 500)
             : String(template.defaultReason || 'No reason provided.');
         const now = Math.floor(Date.now() / 1000);
+        const reminderMinutes = Math.max(1, Number(activityConfig.sessionEmbed?.reminderAfterMinutes) || 120);
         settings.activity = {
             active: true,
             type,
@@ -236,7 +300,8 @@ class SessionAnnouncementService {
             statusLabel: String(template.statusLabel || template.displayName || type),
             reason,
             startedAt: now,
-            startedBy: interaction.user.id
+            startedBy: interaction.user.id,
+            reminderAt: now + Math.round(reminderMinutes * 60)
         };
         const result = this.configManager.addOrUpdateServer(serverConfig);
         if (!result.success) throw new Error(`Could not save session state: ${result.error}`);
@@ -278,6 +343,7 @@ class SessionAnnouncementService {
         if (!saveAnnouncement.success) {
             console.warn('[Session] Could not persist the announcement message ID:', saveAnnouncement.error);
         }
+        this.scheduleReminder(interaction.guildId, settings.activity);
         await this.facilityStatus.refreshGuild(interaction.guildId).catch(error => {
             console.warn('[Session] Facility embed refresh will retry automatically:', error.message);
         });
@@ -290,6 +356,9 @@ class SessionAnnouncementService {
         const settings = serverConfig && serverConfig.facilityStatus;
         const activity = settings && settings.activity;
         if (!settings || !activity || activity.active !== true) throw new Error('There is no active session to end.');
+        const reminderTimer = this.reminderTimers.get(interaction.guildId);
+        if (reminderTimer) clearTimeout(reminderTimer);
+        this.reminderTimers.delete(interaction.guildId);
         const template = activityConfig.types && activityConfig.types[activity.type] || {};
         activity.active = false;
         activity.endedAt = Math.floor(Date.now() / 1000);

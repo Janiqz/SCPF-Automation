@@ -13,7 +13,7 @@ class ApplicationPublishingService {
         this.configManager = configManager;
         this.apiUrl = String(options.apiUrl || process.env.QUOTA_API_URL || '').replace(/\/+$/, '');
         this.secret = String(options.secret || process.env.QUOTA_BOT_SECRET || '');
-        this.notifierRoleId = String(options.notifierRoleId || process.env.RECRUITMENT_NOTIFIER_ROLE_ID || '1544418796679204905');
+        this.notifierRoleId = '1544418796679204905';
         this.channelId = String(options.channelId || process.env.APPLICATION_ANNOUNCEMENT_CHANNEL_ID || '1502347677734535280');
         this.intervalMs = Math.max(15, Number(options.intervalSeconds || process.env.APPLICATION_POLL_SECONDS) || 60) * 1000;
         this.http = options.httpClient || axios;
@@ -103,6 +103,20 @@ class ApplicationPublishingService {
         const existing = this.database.getLatestPortalApplicationDispatch(application.id);
         const messageId = application.discordMessageId || (existing && existing.message_id);
         let message;
+
+        if (job.action === 'delete') {
+            if (messageId) {
+                try {
+                    message = await channel.messages.fetch(String(messageId));
+                    await message.delete();
+                    this.database.setPortalApplicationDispatch(job.id, application.id, channel.guild.id, channel.id, messageId);
+                } catch (error) {
+                    if (error.code !== 10008) throw error;
+                }
+            }
+            await this.acknowledge(job, true);
+            return;
+        }
 
         if (messageId) {
             message = await channel.messages.fetch(String(messageId));

@@ -616,6 +616,12 @@ class RankSyncService {
                 roleName === '@everyone';
 
             if (isGuest) {
+                const boundRoleResult = await this.syncBoundRoles(
+                    member,
+                    serverConfig,
+                    currentRank
+                );
+
                 const guestResult =
                     await this.syncServerMemberState(
                         member,
@@ -641,6 +647,7 @@ class RankSyncService {
                         currentRank,
                     rolesUpdated:
                         guestResult.roleUpdated ||
+                        boundRoleResult.updated ||
                         false,
                     nicknameUpdated:
                         guestResult.nicknameUpdated ||
@@ -901,6 +908,74 @@ class RankSyncService {
     // ROLE SYNC
     // ============================================================
 
+    async syncBoundRoles(
+        member,
+        serverConfig,
+        rank
+    ) {
+        const bindings = Array.isArray(serverConfig.roleBindings)
+            ? serverConfig.roleBindings
+            : [];
+
+        if (bindings.length === 0) {
+            return { success: true, updated: false };
+        }
+
+        const botMember = await member.guild.members.fetchMe();
+
+        if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+            return {
+                success: false,
+                updated: false,
+                error: 'Missing MANAGE_ROLES permission'
+            };
+        }
+
+        let updated = false;
+        const errors = [];
+
+        for (const binding of bindings) {
+            const roleId = String(binding?.roleId || '');
+            const boundRanks = Array.isArray(binding?.ranks)
+                ? binding.ranks.map(Number).filter(Number.isInteger)
+                : [];
+            const role = member.guild.roles.cache.get(roleId);
+
+            if (!role) {
+                errors.push(`Bound role ${roleId || '(missing id)'} no longer exists`);
+                continue;
+            }
+
+            if (botMember.roles.highest.position <= role.position) {
+                errors.push(`Bot role is not high enough to manage ${role.name}`);
+                continue;
+            }
+
+            const shouldHaveRole = boundRanks.includes(Number(rank));
+            const hasRole = member.roles.cache.has(role.id);
+
+            if (shouldHaveRole && !hasRole) {
+                await member.roles.add(role, `Grouped rank binding for Roblox rank ${rank}`);
+                updated = true;
+            } else if (!shouldHaveRole && hasRole) {
+                await member.roles.remove(role, `Grouped rank binding no longer applies to Roblox rank ${rank}`);
+                updated = true;
+            }
+        }
+
+        if (errors.length > 0) {
+            console.warn(
+                `[RankSyncService] Grouped role binding warnings for ${member.user.tag}: ${errors.join('; ')}`
+            );
+        }
+
+        return {
+            success: errors.length === 0,
+            updated,
+            errors
+        };
+    }
+
     async syncRoles(
         member,
         serverConfig,
@@ -995,11 +1070,18 @@ class RankSyncService {
                 updated = true;
             }
 
+            const boundRoleResult = await this.syncBoundRoles(
+                member,
+                serverConfig,
+                rank
+            );
+
             return {
-                success: true,
-                updated,
+                success: boundRoleResult.success,
+                updated: updated || boundRoleResult.updated,
                 role:
-                    targetRoleName
+                    targetRoleName,
+                bindingErrors: boundRoleResult.errors || []
             };
 
         } catch (error) {

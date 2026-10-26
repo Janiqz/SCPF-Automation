@@ -17,6 +17,7 @@ class ApplicationPublishingService {
         this.channelId = String(options.channelId || process.env.APPLICATION_ANNOUNCEMENT_CHANNEL_ID || '1502347677734535280');
         this.intervalMs = Math.max(15, Number(options.intervalSeconds || process.env.APPLICATION_POLL_SECONDS) || 60) * 1000;
         this.http = options.httpClient || axios;
+        this.notificationPreferences = options.notificationPreferences || null;
         this.timer = null;
         this.running = false;
     }
@@ -80,6 +81,10 @@ class ApplicationPublishingService {
         if (job.action === 'result') {
             const result = job.notification;
             if (!result || !/^\d{16,20}$/.test(String(result.discordId))) throw new Error('The application result has no valid Discord recipient.');
+            if (this.notificationPreferences && !await this.notificationPreferences.canSend(result.discordId)) {
+                await this.acknowledge(job, true);
+                return;
+            }
             const accepted = result.outcome === 'accepted';
             const user = await this.client.users.fetch(String(result.discordId));
             const message = await user.send({ embeds: [new EmbedBuilder()

@@ -15,6 +15,7 @@ class SessionAnnouncementService {
         this.facilityStatus = facilityStatus;
         this.configPath = options.configPath || path.join(__dirname, '../../config/activity.json');
         this.database = options.database || null;
+        this.notificationPreferences = options.notificationPreferences || null;
         this.deletionTimers = new Map();
         this.reminderTimers = new Map();
         this.cleanupInterval = null;
@@ -200,6 +201,7 @@ class SessionAnnouncementService {
 
         const config = this.loadConfig();
         const embedConfig = config.sessionEmbed || {};
+        if (this.notificationPreferences && !await this.notificationPreferences.canSend(activity.startedBy)) return true;
         const user = await this.client.users.fetch(activity.startedBy);
         const embed = new EmbedBuilder()
             .setColor(Number(embedConfig.colour) || 0xffffff)

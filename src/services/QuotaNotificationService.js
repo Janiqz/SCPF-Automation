@@ -13,6 +13,7 @@ class QuotaNotificationService {
         this.secret = String(options.secret || process.env.QUOTA_BOT_SECRET || '');
         this.intervalMs = Math.max(5, Number(options.intervalMinutes || process.env.QUOTA_NOTIFICATION_INTERVAL_MINUTES) || 15) * 60 * 1000;
         this.http = options.httpClient || axios;
+        this.notificationPreferences = options.notificationPreferences || null;
         this.timer = null;
         this.running = false;
     }
@@ -74,6 +75,10 @@ class QuotaNotificationService {
 
     async deliver(job) {
         try {
+            if (this.notificationPreferences && !await this.notificationPreferences.canSend(job.discord_id)) {
+                await this.acknowledge(job, true);
+                return true;
+            }
             const user = await this.client.users.fetch(job.discord_id);
             await user.send(this.buildMessage(job));
             await this.acknowledge(job, true);

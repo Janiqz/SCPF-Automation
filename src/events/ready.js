@@ -42,6 +42,9 @@ module.exports = {
             services.quotaNotifications.start();
         }
 
+        services.leaveNotifications?.start();
+        services.logDispatch?.start();
+        services.leaveRoles?.start();
         if (services.applicationPublishing) {
             services.applicationPublishing.start();
         }

@@ -25,6 +25,9 @@ const FacilityStateService = require('./services/FacilityStateService');
 const FacilityStatusPublisher = require('./services/FacilityStatusPublisher');
 const SessionAnnouncementService = require('./services/SessionAnnouncementService');
 const QuotaNotificationService = require('./services/QuotaNotificationService');
+const LeaveNotificationService = require('./services/LeaveNotificationService');
+const LogDispatchService = require('./services/LogDispatchService');
+const LeaveRoleService = require('./services/LeaveRoleService');
 const PortalIdentityService = require('./services/PortalIdentityService');
 const ApplicationPublishingService = require('./services/ApplicationPublishingService');
 const NotificationPreferenceService = require('./services/NotificationPreferenceService');
@@ -558,6 +561,12 @@ const database =
     const quotaNotifications =
         new QuotaNotificationService(client, { notificationPreferences });
 
+    client.leaveNotifications = new LeaveNotificationService(client, { notificationPreferences });
+
+    client.logDispatch = new LogDispatchService(client, { intervalMinutes: 5 });
+
+    client.leaveRoles = new LeaveRoleService(client);
+
     const applicationPublishing = new ApplicationPublishingService(
         client,
         database,
@@ -588,6 +597,9 @@ const database =
         facilityStatus,
         sessionAnnouncements,
         quotaNotifications,
+        leaveNotifications:client.leaveNotifications,
+        logDispatch:client.logDispatch,
+        leaveRoles:client.leaveRoles,
         portalIdentities,
         applicationPublishing,
         notificationPreferences
@@ -806,6 +818,9 @@ const database =
                 sessionAnnouncements.stopCleanup();
             }
 
+            client.leaveNotifications?.stop();
+            client.logDispatch?.stop();
+            client.leaveRoles?.stop();
             if (quotaNotifications) {
                 quotaNotifications.stop();
             }

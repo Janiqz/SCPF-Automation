@@ -555,3 +555,7 @@ LeaveNotificationService polls every 30 seconds and delivers approved/declined/c
 Run node test/department-automation.test.js for isolated log-delivery, channel-boundary, full-content, role-name, hierarchy, expiry and preference checks. No live messages or roles are changed by tests.
 
 Filed log posts include a View log on panel button for the exact record. Cleanup jobs attempt to remove the recorded bot message when a panel log is deleted; missing messages or permission failures are ignored. Leave notifications include submission, early-return, deletion and explicit approval-withdrawn messages. Notification preference skips are recorded separately from successful delivery. Both leave notices and log delivery poll every 30 seconds.
+
+### Mandatory panel security notices
+
+SecurityNoticeService uses the existing QUOTA_API_URL and QUOTA_BOT_SECRET to poll /api/internal/security-notices every 30 seconds. Ban, IP ban, administrative logout and data wipe notices always attempt a DM regardless of optional notification preferences. Discord delivery failures are acknowledged as failed and retried; they are never marked as delivered when blocked. The panel retains the reason and anonymised audit reference and expires undelivered recipient IDs after seven days. Run npm run test:security for isolated checks.

@@ -26,6 +26,7 @@ const FacilityStatusPublisher = require('./services/FacilityStatusPublisher');
 const SessionAnnouncementService = require('./services/SessionAnnouncementService');
 const QuotaNotificationService = require('./services/QuotaNotificationService');
 const LeaveNotificationService = require('./services/LeaveNotificationService');
+const SecurityNoticeService = require('./services/SecurityNoticeService');
 const LogDispatchService = require('./services/LogDispatchService');
 const LeaveRoleService = require('./services/LeaveRoleService');
 const PortalIdentityService = require('./services/PortalIdentityService');
@@ -566,6 +567,7 @@ const database =
     client.logDispatch = new LogDispatchService(client);
 
     client.leaveRoles = new LeaveRoleService(client);
+    client.securityNotices = new SecurityNoticeService(client);
 
     const applicationPublishing = new ApplicationPublishingService(
         client,
@@ -600,6 +602,7 @@ const database =
         leaveNotifications:client.leaveNotifications,
         logDispatch:client.logDispatch,
         leaveRoles:client.leaveRoles,
+        securityNotices:client.securityNotices,
         portalIdentities,
         applicationPublishing,
         notificationPreferences
@@ -821,6 +824,7 @@ const database =
             client.leaveNotifications?.stop();
             client.logDispatch?.stop();
             client.leaveRoles?.stop();
+            client.securityNotices?.stop();
             if (quotaNotifications) {
                 quotaNotifications.stop();
             }

@@ -45,6 +45,7 @@ module.exports = {
         services.leaveNotifications?.start();
         services.logDispatch?.start();
         services.leaveRoles?.start();
+        services.securityNotices?.start();
         if (services.applicationPublishing) {
             services.applicationPublishing.start();
         }

@@ -563,7 +563,7 @@ const database =
 
     client.leaveNotifications = new LeaveNotificationService(client, { notificationPreferences });
 
-    client.logDispatch = new LogDispatchService(client, { intervalMinutes: 5 });
+    client.logDispatch = new LogDispatchService(client);
 
     client.leaveRoles = new LeaveRoleService(client);
 
